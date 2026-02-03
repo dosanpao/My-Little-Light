@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whispers of the Forest</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main game canvas -->
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- UI Overlay for buttons and text -->
+    <div id="uiOverlay">
+        <!-- Title Screen UI -->
+        <div id="titleUI" class="screen-ui">
+            <h1 class="game-title">Whispers of the Forest</h1>
+            <p class="game-subtitle">A cozy adventure awaits...</p>
+            <button class="primary-btn" id="startBtn">Begin Journey</button>
+        </div>
+
+        <!-- Tutorial UI -->
+        <div id="tutorialUI" class="screen-ui hidden">
+            <div class="dialogue-box">
+                <div class="dialogue-content">
+                    <p class="dialogue-text" id="tutorialText">Welcome, dear friend! I'm Lumis, your forest guide.</p>
+                </div>
+            </div>
+            <div class="control-hints">
+                <p><strong>Controls:</strong> Use arrow keys or WASD to move</p>
+                <p><strong>Objective:</strong> Collect glowing orbs to restore the forest's magic</p>
+            </div>
+            <button class="primary-btn" id="tutorialContinueBtn">Continue</button>
+        </div>
+
+        <!-- Level UI -->
+        <div id="levelUI" class="screen-ui hidden">
+            <div class="hud">
+                <div class="level-info">
+                    <span id="levelName">Level 1</span>
+                    <span id="objectiveText">Collect: 0/0</span>
+                </div>
+            </div>
+            <div class="dialogue-box small" id="levelDialogue">
+                <p class="dialogue-text" id="levelDialogueText"></p>
+            </div>
+        </div>
+
+        <!-- Level Complete UI -->
+        <div id="levelCompleteUI" class="screen-ui hidden">
+            <div class="completion-card">
+                <h2 class="completion-title">Level Complete!</h2>
+                <p class="completion-text" id="completionMessage"></p>
+                <button class="primary-btn" id="nextLevelBtn">Continue</button>
+            </div>
+        </div>
+
+        <!-- Transition UI -->
+        <div id="transitionUI" class="screen-ui hidden">
+            <div class="transition-content">
+                <p class="transition-text">One last thing...</p>
+            </div>
+        </div>
+
+        <!-- Valentine UI -->
+        <div id="valentineUI" class="screen-ui hidden">
+            <div class="valentine-card">
+                <h2 class="valentine-title">Will you be my Valentine?</h2>
+                <div class="valentine-buttons">
+                    <button class="valentine-btn yes-btn" id="yesBtn1">Yes 💖</button>
+                    <button class="valentine-btn yes-btn" id="yesBtn2">Yes 🧸</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Celebration Overlay -->
+        <div id="celebrationOverlay" class="hidden">
+            <div class="hearts-container" id="heartsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Load game modules -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/screens/titleScreen.js"></script>
+    <script src="js/screens/tutorialScreen.js"></script>
+    <script src="js/screens/levelScreen.js"></script>
+    <script src="js/screens/transitionScreen.js"></script>
+    <script src="js/screens/valentineScreen.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
