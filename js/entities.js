@@ -124,7 +124,7 @@ class Guide {
     }
 
     /**
-     * Draw the guide character
+     * Draw the guide character (Totoro-inspired)
      */
     draw(ctx, holdingHeart = false) {
         const drawY = this.y + this.bobOffset;
@@ -135,36 +135,177 @@ class Guide {
         // Shadow
         ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + this.size, this.size / 2, this.size / 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + this.size, this.size * 0.7, this.size / 4, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Guide body (lantern-like)
-        ctx.fillStyle = this.color;
+        // Body (round, Totoro-style)
+        ctx.fillStyle = '#c9b896'; // Warm grey-beige
         ctx.beginPath();
-        ctx.arc(this.x, drawY, this.size / 2, 0, Math.PI * 2);
+        ctx.ellipse(this.x, drawY, this.size * 0.6, this.size * 0.75, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Inner glow
-        ctx.fillStyle = '#fff8dc';
+        // Belly
+        ctx.fillStyle = '#e8dcc8'; // Lighter belly
         ctx.beginPath();
-        ctx.arc(this.x, drawY, this.size / 3, 0, Math.PI * 2);
+        ctx.ellipse(this.x, drawY + this.size * 0.2, this.size * 0.4, this.size * 0.5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Sparkles
+        // Belly pattern (V-shaped markings)
+        ctx.strokeStyle = '#a89878';
+        ctx.lineWidth = 2;
+        
+        // Left V
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.size * 0.2, drawY);
+        ctx.lineTo(this.x - this.size * 0.15, drawY + this.size * 0.3);
+        ctx.lineTo(this.x - this.size * 0.05, drawY + this.size * 0.15);
+        ctx.stroke();
+
+        // Right V
+        ctx.beginPath();
+        ctx.moveTo(this.x + this.size * 0.2, drawY);
+        ctx.lineTo(this.x + this.size * 0.15, drawY + this.size * 0.3);
+        ctx.lineTo(this.x + this.size * 0.05, drawY + this.size * 0.15);
+        ctx.stroke();
+
+        // Ears (pointy, triangular)
+        ctx.fillStyle = '#c9b896';
+        
+        // Left ear
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.size * 0.5, drawY - this.size * 0.4);
+        ctx.lineTo(this.x - this.size * 0.3, drawY - this.size * 0.75);
+        ctx.lineTo(this.x - this.size * 0.2, drawY - this.size * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right ear
+        ctx.beginPath();
+        ctx.moveTo(this.x + this.size * 0.5, drawY - this.size * 0.4);
+        ctx.lineTo(this.x + this.size * 0.3, drawY - this.size * 0.75);
+        ctx.lineTo(this.x + this.size * 0.2, drawY - this.size * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ear inner (darker)
+        ctx.fillStyle = '#a89878';
+        
+        // Left ear inner
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.size * 0.4, drawY - this.size * 0.45);
+        ctx.lineTo(this.x - this.size * 0.3, drawY - this.size * 0.65);
+        ctx.lineTo(this.x - this.size * 0.25, drawY - this.size * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right ear inner
+        ctx.beginPath();
+        ctx.moveTo(this.x + this.size * 0.4, drawY - this.size * 0.45);
+        ctx.lineTo(this.x + this.size * 0.3, drawY - this.size * 0.65);
+        ctx.lineTo(this.x + this.size * 0.25, drawY - this.size * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Eyes (large, round)
+        ctx.fillStyle = '#ffffff';
+        
+        // Left eye white
+        ctx.beginPath();
+        ctx.arc(this.x - this.size * 0.2, drawY - this.size * 0.2, this.size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right eye white
+        ctx.beginPath();
+        ctx.arc(this.x + this.size * 0.2, drawY - this.size * 0.2, this.size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pupils (large, dark)
+        ctx.fillStyle = '#2d4a3e';
+        
+        // Left pupil
+        ctx.beginPath();
+        ctx.arc(this.x - this.size * 0.2, drawY - this.size * 0.2, this.size * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right pupil
+        ctx.beginPath();
+        ctx.arc(this.x + this.size * 0.2, drawY - this.size * 0.2, this.size * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye shine
+        ctx.fillStyle = '#ffffff';
+        
+        // Left eye shine
+        ctx.beginPath();
+        ctx.arc(this.x - this.size * 0.17, drawY - this.size * 0.25, this.size * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right eye shine
+        ctx.beginPath();
+        ctx.arc(this.x + this.size * 0.23, drawY - this.size * 0.25, this.size * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nose (small triangle)
+        ctx.fillStyle = '#2d4a3e';
+        ctx.beginPath();
+        ctx.moveTo(this.x, drawY - this.size * 0.05);
+        ctx.lineTo(this.x - this.size * 0.05, drawY + this.size * 0.05);
+        ctx.lineTo(this.x + this.size * 0.05, drawY + this.size * 0.05);
+        ctx.closePath();
+        ctx.fill();
+
+        // Whiskers
+        ctx.strokeStyle = '#2d4a3e';
+        ctx.lineWidth = 1.5;
+        
+        // Left whiskers
         for (let i = 0; i < 3; i++) {
-            const angle = (this.time * 2 + i * (Math.PI * 2 / 3));
-            const sparkleX = this.x + Math.cos(angle) * (this.size * 0.7);
-            const sparkleY = drawY + Math.sin(angle) * (this.size * 0.7);
-            
-            ctx.fillStyle = 'rgba(255, 255, 220, 0.8)';
+            const yOffset = (i - 1) * this.size * 0.08;
             ctx.beginPath();
-            ctx.arc(sparkleX, sparkleY, 3, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(this.x - this.size * 0.35, drawY + yOffset);
+            ctx.lineTo(this.x - this.size * 0.65, drawY + yOffset - this.size * 0.05);
+            ctx.stroke();
         }
+
+        // Right whiskers
+        for (let i = 0; i < 3; i++) {
+            const yOffset = (i - 1) * this.size * 0.08;
+            ctx.beginPath();
+            ctx.moveTo(this.x + this.size * 0.35, drawY + yOffset);
+            ctx.lineTo(this.x + this.size * 0.65, drawY + yOffset - this.size * 0.05);
+            ctx.stroke();
+        }
+
+        // Arms (small, rounded)
+        ctx.fillStyle = '#c9b896';
+        
+        // Left arm
+        ctx.beginPath();
+        ctx.ellipse(this.x - this.size * 0.55, drawY + this.size * 0.1, this.size * 0.15, this.size * 0.25, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right arm
+        ctx.beginPath();
+        ctx.ellipse(this.x + this.size * 0.55, drawY + this.size * 0.1, this.size * 0.15, this.size * 0.25, 0.3, 0, Math.PI * 2);
+        ctx.fill();
 
         // If holding heart (valentine screen)
         if (holdingHeart) {
-            this.drawHeart(ctx, this.x, drawY - this.size);
+            this.drawHeart(ctx, this.x, drawY - this.size * 0.8);
+        }
+
+        // Magical sparkles around (softer than before)
+        const sparkleTime = this.time * 1.5;
+        for (let i = 0; i < 5; i++) {
+            const angle = (sparkleTime + i * (Math.PI * 2 / 5));
+            const sparkleX = this.x + Math.cos(angle) * (this.size * 0.9);
+            const sparkleY = drawY + Math.sin(angle) * (this.size * 0.9);
+            const sparkleAlpha = (Math.sin(sparkleTime * 2 + i) * 0.3 + 0.5);
+            
+            ctx.fillStyle = `rgba(255, 215, 155, ${sparkleAlpha})`;
+            ctx.beginPath();
+            ctx.arc(sparkleX, sparkleY, 2, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 

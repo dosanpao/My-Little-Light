@@ -30,9 +30,9 @@ const CONFIG = {
 
     // Guide character settings
     guide: {
-        size: 40,
-        color: '#ffd89b',
-        glowColor: 'rgba(255, 215, 155, 0.5)'
+        size: 50,  // Slightly larger for Totoro's round body
+        color: '#c9b896',  // Warm grey-beige (Totoro color)
+        glowColor: 'rgba(255, 215, 155, 0.3)'
     },
 
     // Collectible settings
