@@ -8,11 +8,7 @@ class TutorialScreen {
         this.game = game;
         this.guide = new Guide(CONFIG.canvas.width / 2, CONFIG.canvas.height / 2);
         this.currentDialogueIndex = 0;
-        
-        // Setup continue button
-        document.getElementById('tutorialContinueBtn').addEventListener('click', () => {
-            this.nextDialogue();
-        });
+        this.buttonSetup = false;
     }
 
     /**
@@ -23,6 +19,17 @@ class TutorialScreen {
         Utils.showUI('tutorialUI');
         this.currentDialogueIndex = 0;
         this.showDialogue();
+        
+        // Setup continue button (only once)
+        if (!this.buttonSetup) {
+            const continueBtn = document.getElementById('tutorialContinueBtn');
+            if (continueBtn) {
+                continueBtn.addEventListener('click', () => {
+                    this.nextDialogue();
+                });
+                this.buttonSetup = true;
+            }
+        }
     }
 
     /**
@@ -42,8 +49,8 @@ class TutorialScreen {
         if (this.currentDialogueIndex < CONFIG.dialogue.tutorial.length) {
             this.showDialogue();
         } else {
-            // Start first level
-            this.game.changeScreen('level', 0);
+            // Start first level of first part
+            this.game.changeScreen('level', { partIndex: 0, levelIndex: 0 });
         }
     }
 
