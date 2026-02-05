@@ -9,6 +9,14 @@ class TitleScreen {
         this.guide = new Guide(150, CONFIG.canvas.height - 120); // Moved to bottom left
         this.buttonSetup = false;
         this.fireflies = this.initFireflies();
+        
+        // Initialize grass blades once (persistent data for wavy animation)
+        this.grassBlades = Array.from({ length: 60 }, (_, i) => ({
+            x: Math.random() * CONFIG.canvas.width,
+            y: CONFIG.canvas.height - Math.random() * 60,
+            height: 10 + Math.random() * 15,
+            phase: Math.random() * Math.PI * 2
+        }));
     }
     
     /**
@@ -179,19 +187,25 @@ class TitleScreen {
         ctx.fillStyle = '#a8c69f';
         ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
 
-        // Grass texture
-        ctx.fillStyle = 'rgba(127, 182, 158, 0.3)';
-        for (let i = 0; i < 30; i++) {
-            const x = Math.random() * CONFIG.canvas.width;
-            const y = CONFIG.canvas.height - Math.random() * 60;
-            const height = 10 + Math.random() * 15;
+        // Wavy grass blades (animated)
+        ctx.strokeStyle = 'rgba(127, 182, 158, 0.4)';
+        ctx.lineWidth = 2;
+        
+        const time = performance.now() * 0.002; // Slow animation speed
+        
+        for (let i = 0; i < this.grassBlades.length; i++) {
+            const blade = this.grassBlades[i];
+            const sway = Math.sin(time + blade.phase) * 2; // Gentle sway
             
-            // Grass blade
             ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.quadraticCurveTo(x + 2, y - height / 2, x + 1, y - height);
+            ctx.moveTo(blade.x, blade.y);
+            ctx.quadraticCurveTo(
+                blade.x + sway,
+                blade.y - blade.height / 2,
+                blade.x + sway,
+                blade.y - blade.height
+            );
             ctx.strokeStyle = 'rgba(74, 124, 89, 0.4)';
-            ctx.lineWidth = 2;
             ctx.stroke();
         }
 

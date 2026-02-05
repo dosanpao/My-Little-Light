@@ -405,35 +405,6 @@ class LevelScreen {
         ctx.lineTo(0, CONFIG.canvas.height);
         ctx.fill();
 
-        // Small awakening flowers
-        const flowerColors = ['#ffb3ba', '#ffd89b', '#ffe680'];
-        for (let i = 0; i < 8; i++) {
-            const x = 80 + i * 90;
-            const y = CONFIG.canvas.height - 60 - Math.random() * 20;
-            const color = flowerColors[i % flowerColors.length];
-            
-            // Petals
-            ctx.fillStyle = color;
-            for (let p = 0; p < 5; p++) {
-                const angle = (p / 5) * Math.PI * 2;
-                ctx.beginPath();
-                ctx.arc(
-                    x + Math.cos(angle) * 5,
-                    y + Math.sin(angle) * 5,
-                    3,
-                    0,
-                    Math.PI * 2
-                );
-                ctx.fill();
-            }
-            
-            // Center
-            ctx.fillStyle = '#ffd700';
-            ctx.beginPath();
-            ctx.arc(x, y, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
         // Ground with grass texture
         ctx.fillStyle = '#b8d4a8';
         ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
@@ -457,6 +428,34 @@ class LevelScreen {
                 blade.y - blade.height
             );
             ctx.stroke();
+        }
+
+        // Small awakening flowers (using pre-generated data) - drawn AFTER grass
+        const flowerColors = ['#ffb3ba', '#ffd89b', '#ffe680'];
+        for (let i = 0; i < awakeningFlowers.length; i++) {
+            const flower = awakeningFlowers[i];
+            const color = flowerColors[flower.colorIndex];
+            
+            // Petals
+            ctx.fillStyle = color;
+            for (let p = 0; p < 5; p++) {
+                const angle = (p / 5) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.arc(
+                    flower.x + Math.cos(angle) * 5,
+                    flower.y + Math.sin(angle) * 5,
+                    3,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            }
+            
+            // Center
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(flower.x, flower.y, 2, 0, Math.PI * 2);
+            ctx.fill();
         }
 
     }

@@ -19,6 +19,19 @@ class Player {
         // Animation properties
         this.time = 0;
         
+        // Smooth movement properties
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.acceleration = 0.25; // How fast to speed up
+        this.deceleration = 0.85; // How fast to slow down (0.85 = 15% slowdown per frame)
+        
+        // Idle floating animation - gentle hovering
+        this.idleTime = 0;
+        this.idleAmplitudeX = 0.15; // Very gentle horizontal drift (reduced from 0.3)
+        this.idleAmplitudeY = 0.25; // Gentle vertical bob (reduced from 0.5)
+        this.idleSpeedX = 0.015;  // Slower drift (reduced from 0.02)
+        this.idleSpeedY = 0.018;  // Slower bob (reduced from 0.025)
+        
         // Trail effect
         this.trail = [];
         this.maxTrailLength = CONFIG.player.trailLength;
@@ -44,28 +57,47 @@ class Player {
      */
     update(obstacles = []) {
         this.time += 0.08;
+        this.idleTime += 0.016;
         
-        let newX = this.x;
-        let newY = this.y;
+        // Calculate target velocity based on input
+        let targetVelocityX = 0;
+        let targetVelocityY = 0;
         let isMoving = false;
 
-        // Calculate new position
         if (this.keys.up) {
-            newY -= this.speed;
+            targetVelocityY -= this.speed;
             isMoving = true;
         }
         if (this.keys.down) {
-            newY += this.speed;
+            targetVelocityY += this.speed;
             isMoving = true;
         }
         if (this.keys.left) {
-            newX -= this.speed;
+            targetVelocityX -= this.speed;
             isMoving = true;
         }
         if (this.keys.right) {
-            newX += this.speed;
+            targetVelocityX += this.speed;
             isMoving = true;
         }
+
+        // Smooth acceleration towards target velocity
+        if (isMoving) {
+            this.velocityX += (targetVelocityX - this.velocityX) * this.acceleration;
+            this.velocityY += (targetVelocityY - this.velocityY) * this.acceleration;
+        } else {
+            // Smooth deceleration when no keys pressed
+            this.velocityX *= this.deceleration;
+            this.velocityY *= this.deceleration;
+            
+            // Stop completely if velocity is very small
+            if (Math.abs(this.velocityX) < 0.01) this.velocityX = 0;
+            if (Math.abs(this.velocityY) < 0.01) this.velocityY = 0;
+        }
+        
+        // Calculate new position with smooth velocity
+        let newX = this.x + this.velocityX;
+        let newY = this.y + this.velocityY;
 
         // Clamp to canvas bounds
         newX = Utils.clamp(newX, this.size / 2, CONFIG.canvas.width - this.size / 2);
@@ -83,19 +115,25 @@ class Player {
             
             if (Utils.checkCollision(playerRect, obstacle)) {
                 canMove = false;
+                // Bounce back slightly on collision
+                this.velocityX *= -0.3;
+                this.velocityY *= -0.3;
                 break;
             }
         }
 
         // Update position if no collision
         if (canMove) {
-            // Add to trail only if moving
-            if (isMoving && (Math.abs(newX - this.x) > 0.1 || Math.abs(newY - this.y) > 0.1)) {
+            // Add to trail if moving significantly
+            const movementSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+            if (movementSpeed > 0.5) {
                 this.trail.push({
                     x: this.x,
                     y: this.y,
                     alpha: 1,
-                    time: this.time
+                    time: this.time,
+                    velocityX: this.velocityX,
+                    velocityY: this.velocityY
                 });
                 
                 // Limit trail length
@@ -106,19 +144,50 @@ class Player {
             
             this.x = newX;
             this.y = newY;
+        } else {
+            // If hit obstacle, stop at current position
+            newX = this.x;
+            newY = this.y;
         }
         
-        // Fade trail
+        // Fade trail smoothly
         this.trail.forEach((point, i) => {
-            point.alpha = i / this.trail.length;
+            point.alpha = (i + 1) / this.trail.length;
         });
+    }
+    
+    /**
+     * Get the display position with idle animation (for drawing only)
+     */
+    getDisplayPosition() {
+        // Only apply idle animation when truly idle (no velocity)
+        if (Math.abs(this.velocityX) < 0.1 && Math.abs(this.velocityY) < 0.1) {
+            const idleOffsetX = Math.sin(this.idleTime * this.idleSpeedX) * this.idleAmplitudeX;
+            const idleOffsetY = Math.sin(this.idleTime * this.idleSpeedY) * this.idleAmplitudeY;
+            
+            return {
+                x: this.x + idleOffsetX,
+                y: this.y + idleOffsetY
+            };
+        }
+        
+        return { x: this.x, y: this.y };
     }
 
     /**
      * Draw the player as a glowing light
      */
     draw(ctx) {
-        const pulse = 1 + Math.sin(this.time) * 0.1;
+        // Get display position (includes idle animation offset)
+        const displayPos = this.getDisplayPosition();
+        const drawX = displayPos.x;
+        const drawY = displayPos.y;
+        
+        // Calculate movement-based pulse - more energetic when moving
+        const movementSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+        const movementPulse = 1 + (movementSpeed / this.speed) * 0.15; // Scale based on speed
+        const timePulse = 1 + Math.sin(this.time) * 0.08;
+        const pulse = movementPulse * timePulse;
         
         // Draw trail
         this.drawTrail(ctx);
@@ -126,46 +195,56 @@ class Player {
         // Draw shadow (subtle)
         ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + this.size / 2, this.size / 2, this.size / 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(drawX, drawY + this.size / 2, this.size / 2, this.size / 6, 0, 0, Math.PI * 2);
         ctx.fill();
         
         // Draw multiple glow layers for depth
-        this.drawGlowLayers(ctx, pulse);
+        this.drawGlowLayers(ctx, pulse, drawX, drawY);
         
-        // Core light
+        // Core light with slight squash/stretch based on movement direction
+        const stretchX = 1 + Math.abs(this.velocityX) / this.speed * 0.15;
+        const stretchY = 1 + Math.abs(this.velocityY) / this.speed * 0.15;
+        
+        ctx.save();
+        ctx.translate(drawX, drawY);
+        ctx.scale(stretchX, stretchY);
+        
         ctx.fillStyle = this.lightColor.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, (this.size / 2) * pulse, 0, Math.PI * 2);
+        ctx.arc(0, 0, (this.size / 2) * pulse, 0, Math.PI * 2);
         ctx.fill();
         
         // Bright center
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, (this.size / 4) * pulse, 0, Math.PI * 2);
+        ctx.arc(0, 0, (this.size / 4) * pulse, 0, Math.PI * 2);
         ctx.fill();
         
-        // Sparkle highlight
+        // Sparkle highlight - moves slightly with idle animation
+        const sparkleOffset = Math.sin(this.time * 1.5) * 2;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.beginPath();
-        ctx.arc(this.x - 4, this.y - 4, 3 * pulse, 0, Math.PI * 2);
+        ctx.arc(-4 + sparkleOffset, -4, 3 * pulse, 0, Math.PI * 2);
         ctx.fill();
         
+        ctx.restore();
+        
         // Draw floating particles around the light
-        this.drawParticles(ctx, pulse);
+        this.drawParticles(ctx, pulse, drawX, drawY);
     }
 
     /**
      * Draw layered glow effect
      */
-    drawGlowLayers(ctx, pulse) {
+    drawGlowLayers(ctx, pulse, x, y) {
         // Multiple layers for soft glow
         for (let i = 3; i >= 0; i--) {
             const glowRadius = (this.size + i * 12) * pulse;
             const alpha = (0.25 - i * 0.05) * pulse;
             
             const gradient = ctx.createRadialGradient(
-                this.x, this.y, 0,
-                this.x, this.y, glowRadius
+                x, y, 0,
+                x, y, glowRadius
             );
             
             gradient.addColorStop(0, this.hexToRgba(this.lightColor.color, alpha * 0.8));
@@ -174,7 +253,7 @@ class Player {
             
             ctx.fillStyle = gradient;
             ctx.beginPath();
-            ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
+            ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
             ctx.fill();
         }
     }
@@ -197,17 +276,39 @@ class Player {
     /**
      * Draw floating particles
      */
-    drawParticles(ctx, pulse) {
+    drawParticles(ctx, pulse, x, y) {
         const particleCount = 8;
+        const movementSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
         
         for (let i = 0; i < particleCount; i++) {
+            // Base rotation
             const angle = (this.time + i * (Math.PI * 2 / particleCount));
+            
+            // Adjust particle position based on movement direction
+            let angleOffset = 0;
+            if (movementSpeed > 0.5) {
+                // Particles trail behind when moving
+                const movementAngle = Math.atan2(this.velocityY, this.velocityX);
+                angleOffset = Math.sin(angle + movementAngle) * 0.3;
+            }
+            
             const distance = 25 + Math.sin(this.time * 2 + i) * 8;
-            const px = this.x + Math.cos(angle) * distance;
-            const py = this.y + Math.sin(angle) * distance;
-            const particleSize = 1.5 + Math.sin(this.time * 3 + i) * 0.5;
+            const px = x + Math.cos(angle + angleOffset) * distance;
+            const py = y + Math.sin(angle + angleOffset) * distance;
+            
+            // Particle size varies more organically
+            const particleSize = 1.5 + Math.sin(this.time * 3 + i) * 0.5 + movementSpeed * 0.1;
             const particleAlpha = (Math.sin(this.time * 3 + i) * 0.4 + 0.5) * pulse;
             
+            // Particles leave a subtle trail
+            if (movementSpeed > 0.5) {
+                ctx.fillStyle = this.hexToRgba(this.lightColor.glow, particleAlpha * 0.3);
+                ctx.beginPath();
+                ctx.arc(px - this.velocityX * 2, py - this.velocityY * 2, particleSize * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Main particle
             ctx.fillStyle = this.hexToRgba(this.lightColor.glow, particleAlpha * 0.6);
             ctx.beginPath();
             ctx.arc(px, py, particleSize, 0, Math.PI * 2);
