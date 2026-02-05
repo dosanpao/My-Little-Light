@@ -1,40 +1,55 @@
-# 🌲 Whispers of the Forest - Cozy Valentine Game
+# 🌲 My Little Light - Cozy Valentine Game
 
-A delightful 2D web-based game that appears to be a normal casual forest adventure but reveals a sweet Valentine's Day message at the end.
+A delightful 2D web-based game where you play as a glowing light character with a customizable color, exploring peaceful forest levels to ultimately receive a sweet Valentine's Day message.
 
 ## 📋 Overview
 
-Guide your character through three peaceful levels, collecting glowing orbs with the help of Lumis, your friendly forest spirit guide. After completing all levels, the game transitions into a heartfelt Valentine's Day proposal.
+Choose your light color, then guide your glowing character through three peaceful levels while collecting orbs with the help of your companion character (a cute lazy egg). After completing all levels, the game transitions into a heartfelt Valentine's Day reveal.
 
 ## 🎮 Game Flow
 
 ```
-Title Screen → Tutorial → Level 1 → Level 2 → Level 3 → Transition → Valentine Reveal
+Title Screen → Name Input → Tutorial → Color Selection → Level 1 → Level 2 → Level 3 → Transition → Valentine Reveal
 ```
+
+## ✨ Key Features
+
+- **🎨 Customizable Light Character**: Choose from 6 different light colors (Warm White, Soft Yellow, Sky Blue, Lavender, Peach, Mint Green)
+- **✏️ Personalized Experience**: Optional name input for personalized dialogue throughout the game
+- **💫 Smooth Movement**: Physics-based movement with acceleration, deceleration, and idle floating animation
+- **🌟 Visual Effects**: Trail particles, glow effects, and ambient sparkles
+- **🎭 Unique Companion**: Guide character styled as a lazy egg (Gudetama-inspired)
+- **🌲 Three Distinct Levels**: 
+  - Awakening Grove (Easy introduction)
+  - Whispering Woods (Medium with obstacles)
+  - Heartwood Haven (Easy, romantically themed)
+- **💖 Valentine Surprise**: Hidden Valentine's reveal with celebration animation
 
 ## 📁 File Structure
 
 ```
-whispers-of-the-forest/
+my-little-light/
 │
-├── index.html              # Main HTML file
+├── index.html              # Main HTML file with UI overlays
 ├── styles.css              # All styling and animations
+├── README.md               # This file
+├── FILE_STRUCTURE.md       # Detailed code architecture
 │
-├── js/
-│   ├── main.js            # Entry point - initializes game
-│   ├── game.js            # Game manager - controls screens and state
-│   ├── config.js          # ⭐ EDIT THIS: All settings, dialogue, levels
-│   ├── utils.js           # Helper functions
-│   ├── entities.js        # Player, Guide, Collectibles, Obstacles
-│   │
-│   └── screens/
-│       ├── titleScreen.js      # Title screen with start button
-│       ├── tutorialScreen.js   # Tutorial with controls
-│       ├── levelScreen.js      # Main gameplay
-│       ├── transitionScreen.js # Brief transition screen
-│       └── valentineScreen.js  # Valentine reveal
-│
-└── README.md              # This file
+└── js/
+    ├── main.js            # Entry point - initializes game
+    ├── game.js            # Game manager - controls screens and state
+    ├── config.js          # ⭐ EDIT THIS: All settings, dialogue, levels
+    ├── utils.js           # Helper functions
+    ├── entities.js        # Player (light), Guide (egg), Collectibles, Obstacles
+    │
+    └── screens/
+        ├── titleScreen.js          # Title screen with forest scene
+        ├── nameInputScreen.js      # Optional name input
+        ├── tutorialScreen.js       # Tutorial with controls
+        ├── colorSelectionScreen.js # Choose light color
+        ├── levelScreen.js          # Main gameplay
+        ├── transitionScreen.js     # Brief transition screen
+        └── valentineScreen.js      # Valentine reveal
 ```
 
 ## 🚀 How to Run
@@ -60,59 +75,50 @@ php -S localhost:8000
 
 Then open your browser to `http://localhost:8000`
 
+## 🎮 Controls
+
+- **Arrow Keys** or **WASD**: Move your light character
+- **Mouse Click**: Navigate menus, dismiss dialogue bubbles, and interact with buttons
+
 ## 🎨 How to Customize
 
 ### 🗣️ Changing Dialogue
 
 **File:** `js/config.js`
 
-All dialogue is stored in the `CONFIG.dialogue` object:
+All dialogue is stored in the `CONFIG.dialogue` object with `{name}` placeholders:
 
 ```javascript
 dialogue: {
+    namePrompt: "Before we begin, what should I call you?",
     tutorial: [
-        "Your custom welcome message here",
-        "More tutorial text...",
+        "Welcome{name}! I'm Lumis, your forest guide.",
+        "Use arrow keys or WASD to move around.",
+        // ... more tutorial lines
     ],
-    level1Start: "Your level 1 message",
-    level1Complete: "Your completion message",
-    // ... etc
-    valentine: "Will you be my Valentine?" // ← Change this!
+    level1Start: "The forest whispers to those who listen{name}...",
+    level1Complete: "You did wonderfully{name}!",
+    // ... more dialogue
+    valentine: "Will you be my Valentine{name}?"  // ← The big reveal!
 }
 ```
 
-### 🎨 Replacing Placeholder Art
+The `{name}` placeholder is automatically replaced with the player's name (or removed if no name was entered).
 
-The game currently uses simple shapes drawn with JavaScript. To use custom images:
+### 🎨 Adding/Modifying Light Colors
 
-#### Option 1: Replace Guide Character
-**File:** `js/entities.js` → `Guide` class → `draw()` method
-
-Replace the drawing code with an image:
+**File:** `js/config.js` → `CONFIG.lightColors` array
 
 ```javascript
-draw(ctx, holdingHeart = false) {
-    const img = new Image();
-    img.src = 'assets/guide-character.png';
-    ctx.drawImage(img, this.x - this.size, this.y - this.size, this.size * 2, this.size * 2);
-}
+lightColors: [
+    {
+        name: 'Your Color Name',
+        color: '#hexcode',  // Main color
+        glow: '#hexcode'    // Glow/aura color
+    },
+    // ... add more colors
+]
 ```
-
-#### Option 2: Replace Background
-**File:** `js/screens/levelScreen.js` → `drawLevelBackground()` method
-
-```javascript
-drawLevelBackground(ctx) {
-    const bg = new Image();
-    bg.src = 'assets/forest-background.png';
-    ctx.drawImage(bg, 0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
-}
-```
-
-#### Option 3: Replace Player Character
-**File:** `js/entities.js` → `Player` class → `draw()` method
-
-Replace the circle/face drawing with your character sprite.
 
 ### 🎯 Modifying Levels
 
@@ -121,11 +127,11 @@ Replace the circle/face drawing with your character sprite.
 Each level has:
 - `name`: Level display name
 - `playerStart`: Starting position {x, y}
-- `guidePosition`: Where the guide appears {x, y}
-- `collectibles`: Array of orb positions [{x, y}, {x, y}, ...]
+- `guidePosition`: Where the guide character appears {x, y}
+- `collectibles`: Array of orb positions [{x, y}, ...]
 - `obstacles`: Array of blocking rectangles [{x, y, width, height}, ...]
 
-Example - Adding more collectibles to Level 1:
+Example - Adding collectibles to Level 1:
 
 ```javascript
 levels: [
@@ -136,25 +142,49 @@ levels: [
         collectibles: [
             { x: 200, y: 150 },
             { x: 400, y: 200 },
-            // Add more here:
-            { x: 300, y: 300 },
-            { x: 500, y: 350 }
+            { x: 600, y: 150 },
+            // Add more positions here
         ],
-        obstacles: []
+        obstacles: [] // No obstacles in level 1
     },
     // ... more levels
 ]
 ```
 
+### ⚙️ Game Settings
+
+**File:** `js/config.js`
+
+```javascript
+// Canvas size
+canvas: {
+    width: 800,
+    height: 600
+}
+
+// Player settings (light character)
+player: {
+    size: 30,           // Size of light orb
+    speed: 3,           // Movement speed
+    trailLength: 12     // Number of trail particles
+}
+
+// Collectible settings
+collectible: {
+    size: 20,
+    color: '#ffb3ba',
+    glowColor: 'rgba(255, 179, 186, 0.6)'
+}
+```
+
 ### 🎨 Changing Colors
 
-**File:** `js/config.js` → `CONFIG.colors` object
+**File:** `js/config.js` → `CONFIG.colors`
 
 ```javascript
 colors: {
     background: '#faf8f3',    // Canvas background
-    player: '#4a7c59',        // Player character color
-    guide: '#ffd89b',         // Guide character color
+    guide: '#ffd89b',         // Guide character base color
     collectible: '#ffb3ba',   // Orb color
     obstacle: '#2d4a3e',      // Obstacle color
 }
@@ -171,41 +201,40 @@ Also edit CSS variables in `styles.css`:
 }
 ```
 
-### ⚙️ Adjusting Game Settings
+## 🎨 Character Customization
 
-**File:** `js/config.js`
+### Player Character (Light)
+The player is rendered as a glowing orb with:
+- Customizable color (chosen in color selection screen)
+- Glow effects with multiple layers
+- Floating trail particles
+- Movement-based stretch effects
+- Idle floating animation when stationary
 
-```javascript
-// Canvas size
-canvas: {
-    width: 800,    // Change width
-    height: 600    // Change height
-}
+**To modify:** Edit `Player` class in `js/entities.js`
 
-// Player movement speed
-player: {
-    speed: 4  // Increase for faster movement
-}
+### Guide Character (Lazy Egg)
+The guide is styled as a cute, lazy egg character with:
+- Egg body with yolk showing on top
+- Lazy/unimpressed facial expression
+- Tiny droopy arms and legs
+- Gentle idle animation
+- Can hold a heart in the valentine screen
 
-// Collectible size
-collectible: {
-    size: 20  // Make orbs bigger/smaller
-}
-```
+**To modify:** Edit `Guide` class in `js/entities.js` → `draw()` method
 
-## 🎮 Controls
+## 🏞️ Level Backgrounds
 
-- **Arrow Keys** or **WASD**: Move character
-- **Mouse Click**: Navigate menus and buttons
+Each level has a unique background:
 
-## 🌟 Features
+1. **Awakening Grove** - Sunny forest with trees, grass, flowers
+2. **Whispering Woods** - Mystical forest with light rays and mushrooms
+3. **Heartwood Haven** - Romantic pink sky with heart-shaped elements
 
-✨ **Cozy Aesthetic**: Warm, organic design with soft colors  
-🎨 **Smooth Animations**: Gentle floating, pulsing, and glow effects  
-🎯 **Progressive Difficulty**: Easy → Medium → Easy (emotional warmth)  
-💖 **Hidden Valentine**: Surprise reveal after completing all levels  
-🎵 **Modular Code**: Easy to extend and customize  
-📱 **Responsive**: Works on desktop browsers  
+Backgrounds are drawn in `levelScreen.js` with methods:
+- `drawAwakeningGroveBackground()`
+- `drawWhisperingWoodsBackground()`
+- `drawHeartwoodHavenBackground()`
 
 ## 🔧 Technical Details
 
@@ -213,61 +242,42 @@ collectible: {
 - **Graphics**: HTML5 Canvas API
 - **Animation**: RequestAnimationFrame loop at ~60 FPS
 - **Architecture**: Screen-based state management
+- **Physics**: Custom momentum-based movement system
 - **Compatibility**: Modern browsers (Chrome, Firefox, Safari, Edge)
 
-## 📝 Code Structure
+## 📝 Code Architecture
 
 ### Main Game Loop
-1. `main.js` initializes the game
-2. `game.js` manages screen transitions and input
-3. Each screen has its own `update()` and `draw()` methods
-4. Game runs at 60 FPS using `requestAnimationFrame`
+```
+main.js → game.js → Screen system
+                     ↓
+                   update()
+                     ↓
+                   draw()
+                     ↓
+                requestAnimationFrame (60 FPS)
+```
 
 ### Screen Lifecycle
 ```javascript
-// When entering a screen
 enter(data) {
-    // Setup UI, reset state
+    // Setup UI, reset state, load data
 }
 
-// Every frame
 update() {
-    // Update game logic
+    // Update game logic, animations, check conditions
 }
 
-// Every frame
 draw(ctx) {
     // Render to canvas
 }
 ```
 
-### Adding a New Screen
-
-1. Create file in `js/screens/yourScreen.js`
-2. Implement the screen class with `enter()`, `update()`, `draw()`
-3. Add to game.js screens object
-4. Call with `game.changeScreen('yourScreen')`
-
-## 🎨 Asset Replacement Guide
-
-### Current Placeholder Assets
-- **Player**: Green circle with simple face
-- **Guide (Lumis)**: Golden orb with sparkles
-- **Collectibles**: Pink glowing orbs
-- **Obstacles**: Dark green rounded rectangles
-- **Background**: Gradient fills with simple shapes
-
-### To Use Real Art
-1. Create an `assets/` folder
-2. Add your images (PNG with transparency recommended)
-3. Replace drawing code in respective entity classes
-4. Use `const img = new Image(); img.src = 'assets/your-image.png'`
-
-### Recommended Image Sizes
-- **Guide Character**: 80×80px
-- **Player Character**: 60×60px
-- **Collectible Orb**: 40×40px
-- **Background**: 800×600px (or scale proportionally)
+### Entity System
+- **Player**: Light character with physics-based movement
+- **Guide**: Companion character with idle animation
+- **Collectible**: Glowing orbs with pulse animation
+- **Obstacle**: Static barriers with shadows
 
 ## 🐛 Troubleshooting
 
@@ -281,14 +291,36 @@ draw(ctx) {
 - Check if JavaScript is enabled
 - Clear browser cache and refresh
 
-**Images don't load:**
-- Check file paths are correct
-- Use relative paths: `assets/image.png` not `/assets/image.png`
-- Ensure images are in the correct format (PNG, JPG)
+**Movement feels wrong:**
+- Adjust `speed`, `acceleration`, and `deceleration` in `config.js`
+- Player class in `entities.js` has physics settings
+
+**Colors look wrong:**
+- Check both `config.js` colors and CSS variables in `styles.css`
+- Some colors are hardcoded in drawing methods
+
+## 💡 Tips for Developers
+
+1. **Start with config.js** - Most customization happens here
+2. **Test in browser** - Use developer tools to debug
+3. **Read FILE_STRUCTURE.md** - For detailed code architecture
+4. **One screen at a time** - Focus on modifying one screen/feature
+5. **Use console.log()** - For debugging game state and flow
+
+## 🎮 Gameplay Tips
+
+- Move smoothly - the physics system rewards gentle movements
+- Dismiss dialogue by clicking on it to start playing
+- Each light color has a unique personality - choose your favorite!
+- Take your time in Level 3 - it's meant to be peaceful and romantic
 
 ## 📄 License
+
 Feel free to customize and use this game for personal projects!
 
 ---
 
 Made with 💚 for a special someone
+
+**Game Flow Summary:**
+Title → Name (optional) → Tutorial → Pick Color → 3 Levels → Valentine! 💖
