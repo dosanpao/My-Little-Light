@@ -8,11 +8,7 @@ class TutorialScreen {
         this.game = game;
         this.guide = new Guide(CONFIG.canvas.width / 2, CONFIG.canvas.height - 200); // Bottom center
         this.currentDialogueIndex = 0;
-        
-        // Setup continue button
-        document.getElementById('tutorialContinueBtn').addEventListener('click', () => {
-            this.nextDialogue();
-        });
+        this.dialogueClickBound = false;
     }
 
     /**
@@ -23,6 +19,29 @@ class TutorialScreen {
         Utils.showUI('tutorialUI');
         this.currentDialogueIndex = 0;
         this.showDialogue();
+        this.setupDialogueClick();
+    }
+    
+    /**
+     * Setup click handler for dialogue to continue
+     */
+    setupDialogueClick() {
+        // Make the entire tutorial UI clickable
+        const tutorialUI = document.getElementById('tutorialUI');
+        if (tutorialUI) {
+            // Clone and replace to remove old listeners
+            const newTutorialUI = tutorialUI.cloneNode(true);
+            tutorialUI.parentNode.replaceChild(newTutorialUI, tutorialUI);
+            
+            // Add click handler to the entire screen
+            newTutorialUI.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.nextDialogue();
+            }, false);
+            
+            this.dialogueClickBound = true;
+        }
     }
 
     /**
@@ -32,15 +51,6 @@ class TutorialScreen {
         const dialogue = CONFIG.dialogue.tutorial[this.currentDialogueIndex];
         const personalizedDialogue = this.game.getPersonalizedDialogue(dialogue);
         document.getElementById('tutorialText').textContent = personalizedDialogue;
-        
-        // Position the chat bubble above the guide
-        const chatBubble = document.getElementById('tutorialDialogue');
-        if (chatBubble) {
-            // Guide is at bottom center, so position bubble above it
-            chatBubble.style.bottom = '240px'; // Above the guide
-            chatBubble.style.left = '50%';
-            chatBubble.style.transform = 'translateX(-50%)';
-        }
     }
 
     /**
