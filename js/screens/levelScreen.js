@@ -44,8 +44,9 @@ class LevelScreen {
     loadLevel(levelIndex) {
         const levelData = CONFIG.levels[levelIndex];
         
-        // Create player
-        this.player = new Player(levelData.playerStart.x, levelData.playerStart.y);
+        // Create player with selected light color
+        const lightColor = this.game.state.lightColor || CONFIG.lightColors[0];
+        this.player = new Player(levelData.playerStart.x, levelData.playerStart.y, lightColor);
         
         // Create guide
         this.guide = new Guide(levelData.guidePosition.x, levelData.guidePosition.y);
@@ -83,12 +84,13 @@ class LevelScreen {
     }
 
     /**
-     * Get dialogue for current level
+     * Get dialogue for current level (personalized)
      */
     getLevelDialogue(type) {
         const levelNum = this.currentLevelIndex + 1;
         const key = `level${levelNum}${type.charAt(0).toUpperCase() + type.slice(1)}`;
-        return CONFIG.dialogue[key] || '';
+        const dialogue = CONFIG.dialogue[key] || '';
+        return this.game.getPersonalizedDialogue(dialogue);
     }
 
     /**

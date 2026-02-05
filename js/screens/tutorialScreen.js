@@ -26,15 +26,16 @@ class TutorialScreen {
     }
 
     /**
-     * Show current dialogue
+     * Show current dialogue with personalization
      */
     showDialogue() {
         const dialogue = CONFIG.dialogue.tutorial[this.currentDialogueIndex];
-        document.getElementById('tutorialText').textContent = dialogue;
+        const personalizedDialogue = this.game.getPersonalizedDialogue(dialogue);
+        document.getElementById('tutorialText').textContent = personalizedDialogue;
     }
 
     /**
-     * Progress to next dialogue or start game
+     * Progress to next dialogue or start color selection
      */
     nextDialogue() {
         this.currentDialogueIndex++;
@@ -42,8 +43,8 @@ class TutorialScreen {
         if (this.currentDialogueIndex < CONFIG.dialogue.tutorial.length) {
             this.showDialogue();
         } else {
-            // Start first level
-            this.game.changeScreen('level', 0);
+            // Go to color selection before first level
+            this.game.changeScreen('colorSelection');
         }
     }
 

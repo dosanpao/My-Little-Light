@@ -3,88 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whispers of the Forest</title>
+    <title>Whispers of the Forest - A Cozy Valentine Adventure</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Main game canvas -->
-    <canvas id="gameCanvas"></canvas>
-    
-    <!-- UI Overlay for buttons and text -->
-    <div id="uiOverlay">
+    <div class="game-container">
+        <!-- Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
         <!-- Title Screen UI -->
-        <div id="titleUI" class="screen-ui">
+        <div id="titleUI" class="screen-ui hidden">
             <h1 class="game-title">Whispers of the Forest</h1>
-            <p class="game-subtitle">A cozy adventure awaits...</p>
-            <button class="primary-btn" id="startBtn">Begin Journey</button>
+            <p class="game-subtitle">A Cozy Adventure</p>
+            <button id="startBtn" class="btn btn-primary">Start Game</button>
         </div>
 
-        <!-- Tutorial UI -->
+        <!-- Name Input Screen UI -->
+        <div id="nameInputUI" class="screen-ui hidden">
+            <div class="dialogue-box">
+                <p class="dialogue-text">Before we begin, what should I call you?</p>
+                <input 
+                    type="text" 
+                    id="playerNameInput" 
+                    class="name-input" 
+                    placeholder="Enter your name (optional)"
+                    maxlength="20"
+                >
+                <button id="nameInputContinueBtn" class="btn btn-primary">Continue</button>
+                <p class="hint-text">You can skip this if you'd like!</p>
+            </div>
+        </div>
+
+        <!-- Tutorial Screen UI -->
         <div id="tutorialUI" class="screen-ui hidden">
             <div class="dialogue-box">
-                <div class="dialogue-content">
-                    <p class="dialogue-text" id="tutorialText">Welcome, dear friend! I'm Lumis, your forest guide.</p>
-                </div>
+                <p id="tutorialText" class="dialogue-text"></p>
+                <button id="tutorialContinueBtn" class="btn btn-primary">Continue</button>
             </div>
-            <div class="control-hints">
-                <p><strong>Controls:</strong> Use arrow keys or WASD to move</p>
-                <p><strong>Objective:</strong> Collect glowing orbs to restore the forest's magic</p>
-            </div>
-            <button class="primary-btn" id="tutorialContinueBtn">Continue</button>
         </div>
 
-        <!-- Level UI -->
+        <!-- Color Selection Screen UI -->
+        <div id="colorSelectionUI" class="screen-ui hidden">
+            <div class="color-selection-box">
+                <h2 class="selection-title">Choose Your Light</h2>
+                <p class="selection-subtitle">Select the color of your guiding light</p>
+                <div id="colorOptions" class="color-options-grid">
+                    <!-- Color options will be dynamically generated -->
+                </div>
+                <button id="colorConfirmBtn" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+
+        <!-- Level Screen UI -->
         <div id="levelUI" class="screen-ui hidden">
             <div class="hud">
-                <div class="level-info">
-                    <span id="levelName">Level 1</span>
-                    <span id="objectiveText">Collect: 0/0</span>
-                </div>
+                <h2 id="levelName" class="level-name"></h2>
+                <p id="objectiveText" class="objective-text"></p>
             </div>
-            <div class="dialogue-box small" id="levelDialogue">
-                <p class="dialogue-text" id="levelDialogueText"></p>
+            <div id="levelDialogue" class="dialogue-box dialogue-floating hidden">
+                <p id="levelDialogueText" class="dialogue-text"></p>
             </div>
         </div>
 
         <!-- Level Complete UI -->
         <div id="levelCompleteUI" class="screen-ui hidden">
-            <div class="completion-card">
-                <h2 class="completion-title">Level Complete!</h2>
-                <p class="completion-text" id="completionMessage"></p>
-                <button class="primary-btn" id="nextLevelBtn">Continue</button>
+            <div class="dialogue-box">
+                <h2 class="completion-title">Level Complete! ✨</h2>
+                <p id="completionMessage" class="dialogue-text"></p>
+                <button id="nextLevelBtn" class="btn btn-primary">Continue</button>
             </div>
         </div>
 
-        <!-- Transition UI -->
+        <!-- Transition Screen UI -->
         <div id="transitionUI" class="screen-ui hidden">
-            <div class="transition-content">
-                <p class="transition-text">One last thing...</p>
+            <div class="dialogue-box">
+                <p id="transitionText" class="dialogue-text"></p>
             </div>
         </div>
 
-        <!-- Valentine UI -->
+        <!-- Valentine Screen UI -->
         <div id="valentineUI" class="screen-ui hidden">
-            <div class="valentine-card">
-                <h2 class="valentine-title">Will you be my Valentine?</h2>
+            <div class="valentine-box">
+                <h2 id="valentineQuestion" class="valentine-question"></h2>
                 <div class="valentine-buttons">
-                    <button class="valentine-btn yes-btn" id="yesBtn1">Yes 💖</button>
-                    <button class="valentine-btn yes-btn" id="yesBtn2">Yes 🧸</button>
+                    <button id="yesBtn1" class="btn btn-yes">Yes! 💖</button>
+                    <button id="yesBtn2" class="btn btn-yes">Of course! 💕</button>
                 </div>
             </div>
         </div>
 
         <!-- Celebration Overlay -->
-        <div id="celebrationOverlay" class="hidden">
-            <div class="hearts-container" id="heartsContainer"></div>
+        <div id="celebrationOverlay" class="screen-ui celebration-overlay hidden">
+            <div class="celebration-message">
+                <h1 class="celebration-title">🎉 Yay! 🎉</h1>
+                <p class="celebration-text">Thank you for being my Valentine! 💖</p>
+            </div>
+            <div id="heartsContainer" class="hearts-container"></div>
         </div>
     </div>
 
-    <!-- Load game modules -->
+    <!-- Game Scripts -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/entities.js"></script>
     <script src="js/screens/titleScreen.js"></script>
+    <script src="js/screens/nameInputScreen.js"></script>
     <script src="js/screens/tutorialScreen.js"></script>
+    <script src="js/screens/colorSelectionScreen.js"></script>
     <script src="js/screens/levelScreen.js"></script>
     <script src="js/screens/transitionScreen.js"></script>
     <script src="js/screens/valentineScreen.js"></script>

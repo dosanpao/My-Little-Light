@@ -18,6 +18,10 @@ class TransitionScreen {
         Utils.hideAllScreens();
         Utils.showUI('transitionUI');
         this.timer = 0;
+        
+        // Update transition text with personalized dialogue
+        const transitionText = this.game.getPersonalizedDialogue(CONFIG.dialogue.transition);
+        document.getElementById('transitionText').textContent = transitionText;
     }
 
     /**

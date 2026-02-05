@@ -28,6 +28,10 @@ class ValentineScreen {
         Utils.showUI('valentineUI');
         this.celebrating = false;
         this.celebrationTimer = 0;
+        
+        // Update valentine question with personalized dialogue
+        const valentineText = this.game.getPersonalizedDialogue(CONFIG.dialogue.valentine);
+        document.getElementById('valentineQuestion').textContent = valentineText;
     }
 
     /**

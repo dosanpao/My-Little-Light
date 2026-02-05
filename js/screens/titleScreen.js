@@ -22,7 +22,8 @@ class TitleScreen {
             const startBtn = document.getElementById('startBtn');
             if (startBtn) {
                 startBtn.addEventListener('click', () => {
-                    this.game.changeScreen('tutorial');
+                    // Go to name input screen first
+                    this.game.changeScreen('nameInput');
                 });
                 this.buttonSetup = true;
             }

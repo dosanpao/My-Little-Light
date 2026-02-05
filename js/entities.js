@@ -1,19 +1,27 @@
 /**
  * GAME ENTITIES
- * Classes for player, guide character, collectibles, and obstacles
+ * Classes for player (light), guide character, collectibles, and obstacles
  */
 
 /**
- * Player class
- * The character controlled by the user
+ * Player class - Now a glowing light with customizable color
  */
 class Player {
-    constructor(x, y) {
+    constructor(x, y, lightColor = null) {
         this.x = x;
         this.y = y;
         this.size = CONFIG.player.size;
         this.speed = CONFIG.player.speed;
-        this.color = CONFIG.player.color;
+        
+        // Light color (customizable)
+        this.lightColor = lightColor || CONFIG.lightColors[0];
+        
+        // Animation properties
+        this.time = 0;
+        
+        // Trail effect
+        this.trail = [];
+        this.maxTrailLength = CONFIG.player.trailLength;
         
         // Movement keys
         this.keys = {
@@ -25,17 +33,39 @@ class Player {
     }
 
     /**
+     * Set the light color
+     */
+    setLightColor(colorData) {
+        this.lightColor = colorData;
+    }
+
+    /**
      * Update player position based on key input
      */
     update(obstacles = []) {
+        this.time += 0.08;
+        
         let newX = this.x;
         let newY = this.y;
+        let isMoving = false;
 
         // Calculate new position
-        if (this.keys.up) newY -= this.speed;
-        if (this.keys.down) newY += this.speed;
-        if (this.keys.left) newX -= this.speed;
-        if (this.keys.right) newX += this.speed;
+        if (this.keys.up) {
+            newY -= this.speed;
+            isMoving = true;
+        }
+        if (this.keys.down) {
+            newY += this.speed;
+            isMoving = true;
+        }
+        if (this.keys.left) {
+            newX -= this.speed;
+            isMoving = true;
+        }
+        if (this.keys.right) {
+            newX += this.speed;
+            isMoving = true;
+        }
 
         // Clamp to canvas bounds
         newX = Utils.clamp(newX, this.size / 2, CONFIG.canvas.width - this.size / 2);
@@ -59,45 +89,140 @@ class Player {
 
         // Update position if no collision
         if (canMove) {
+            // Add to trail only if moving
+            if (isMoving && (Math.abs(newX - this.x) > 0.1 || Math.abs(newY - this.y) > 0.1)) {
+                this.trail.push({
+                    x: this.x,
+                    y: this.y,
+                    alpha: 1,
+                    time: this.time
+                });
+                
+                // Limit trail length
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+            }
+            
             this.x = newX;
             this.y = newY;
+        }
+        
+        // Fade trail
+        this.trail.forEach((point, i) => {
+            point.alpha = i / this.trail.length;
+        });
+    }
+
+    /**
+     * Draw the player as a glowing light
+     */
+    draw(ctx) {
+        const pulse = 1 + Math.sin(this.time) * 0.1;
+        
+        // Draw trail
+        this.drawTrail(ctx);
+        
+        // Draw shadow (subtle)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y + this.size / 2, this.size / 2, this.size / 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw multiple glow layers for depth
+        this.drawGlowLayers(ctx, pulse);
+        
+        // Core light
+        ctx.fillStyle = this.lightColor.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, (this.size / 2) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bright center
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, (this.size / 4) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Sparkle highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.beginPath();
+        ctx.arc(this.x - 4, this.y - 4, 3 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw floating particles around the light
+        this.drawParticles(ctx, pulse);
+    }
+
+    /**
+     * Draw layered glow effect
+     */
+    drawGlowLayers(ctx, pulse) {
+        // Multiple layers for soft glow
+        for (let i = 3; i >= 0; i--) {
+            const glowRadius = (this.size + i * 12) * pulse;
+            const alpha = (0.25 - i * 0.05) * pulse;
+            
+            const gradient = ctx.createRadialGradient(
+                this.x, this.y, 0,
+                this.x, this.y, glowRadius
+            );
+            
+            gradient.addColorStop(0, this.hexToRgba(this.lightColor.color, alpha * 0.8));
+            gradient.addColorStop(0.5, this.hexToRgba(this.lightColor.glow, alpha * 0.5));
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 
     /**
-     * Draw the player
+     * Draw trail effect
      */
-    draw(ctx) {
-        // Shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y + this.size / 2, this.size / 2, this.size / 4, 0, 0, Math.PI * 2);
-        ctx.fill();
+    drawTrail(ctx) {
+        this.trail.forEach((point, i) => {
+            const size = (this.size / 3) * point.alpha;
+            const alpha = point.alpha * 0.4;
+            
+            ctx.fillStyle = this.hexToRgba(this.lightColor.glow, alpha);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
 
-        // Player body
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
-        ctx.fill();
+    /**
+     * Draw floating particles
+     */
+    drawParticles(ctx, pulse) {
+        const particleCount = 8;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (this.time + i * (Math.PI * 2 / particleCount));
+            const distance = 25 + Math.sin(this.time * 2 + i) * 8;
+            const px = this.x + Math.cos(angle) * distance;
+            const py = this.y + Math.sin(angle) * distance;
+            const particleSize = 1.5 + Math.sin(this.time * 3 + i) * 0.5;
+            const particleAlpha = (Math.sin(this.time * 3 + i) * 0.4 + 0.5) * pulse;
+            
+            ctx.fillStyle = this.hexToRgba(this.lightColor.glow, particleAlpha * 0.6);
+            ctx.beginPath();
+            ctx.arc(px, py, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
 
-        // Glow effect
-        Utils.drawGlow(ctx, this.x, this.y, this.size, 'rgba(74, 124, 89, 0.3)');
-
-        // Simple face
-        ctx.fillStyle = '#2d4a3e';
-        // Eyes
-        ctx.beginPath();
-        ctx.arc(this.x - 6, this.y - 3, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(this.x + 6, this.y - 3, 3, 0, Math.PI * 2);
-        ctx.fill();
-        // Smile
-        ctx.beginPath();
-        ctx.arc(this.x, this.y + 2, 6, 0.2, Math.PI - 0.2);
-        ctx.strokeStyle = '#2d4a3e';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+    /**
+     * Convert hex color to rgba
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 }
 

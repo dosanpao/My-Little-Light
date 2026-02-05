@@ -21,11 +21,45 @@ const CONFIG = {
         goal: '#7fb69e'
     },
 
-    // Player settings
+    // Light color options for player selection
+    lightColors: [
+        {
+            name: 'Warm White',
+            color: '#fff8e7',
+            glow: '#ffd89b'
+        },
+        {
+            name: 'Soft Yellow',
+            color: '#ffe680',
+            glow: '#ffd700'
+        },
+        {
+            name: 'Sky Blue',
+            color: '#87ceeb',
+            glow: '#4da6ff'
+        },
+        {
+            name: 'Lavender',
+            color: '#e6b3ff',
+            glow: '#cc99ff'
+        },
+        {
+            name: 'Peach',
+            color: '#ffcc99',
+            glow: '#ffb366'
+        },
+        {
+            name: 'Mint Green',
+            color: '#98fb98',
+            glow: '#7fb69e'
+        }
+    ],
+
+    // Player settings (now a light character)
     player: {
         size: 30,
         speed: 4,
-        color: '#4a7c59'
+        trailLength: 12 // Number of trail particles
     },
 
     // Guide character settings
@@ -44,26 +78,29 @@ const CONFIG = {
 
     // DIALOGUE - Easy to replace!
     // Each line appears in sequence during the game
+    // Use {name} placeholder for personalized dialogue
     dialogue: {
+        namePrompt: "Before we begin, what should I call you?",
+        
         tutorial: [
-            "Welcome, dear friend! I'm Lumis, your forest guide.",
+            "Welcome{name}! I'm Lumis, your forest guide.",
             "Use arrow keys or WASD to move around.",
             "Collect the glowing orbs to restore the forest's magic!",
             "Let's begin this cozy adventure together."
         ],
         
-        level1Start: "The forest whispers to those who listen. Find the orbs of light!",
-        level1Complete: "You did wonderfully! The forest is starting to glow again.",
+        level1Start: "The forest whispers to those who listen{name}. Find the orbs of light!",
+        level1Complete: "You did wonderfully{name}! The forest is starting to glow again.",
         
-        level2Start: "The magic grows stronger. Can you feel it in the air?",
-        level2Complete: "Your kindness brings warmth to these woods. Keep going!",
+        level2Start: "The magic grows stronger{name}. Can you feel it in the air?",
+        level2Complete: "Your kindness brings warmth to these woods{name}. Keep going!",
         
-        level3Start: "This is the final gathering. Take your time and enjoy the peace.",
-        level3Complete: "The forest is whole again, thanks to you. You have a special heart.",
+        level3Start: "This is the final gathering{name}. Take your time and enjoy the peace.",
+        level3Complete: "The forest is whole again, thanks to you{name}. You have a special heart.",
         
-        transition: "One last thing...",
+        transition: "One last thing{name}...",
         
-        valentine: "Will you be my Valentine?"
+        valentine: "Will you be my Valentine{name}?"
     },
 
     // LEVEL DEFINITIONS

@@ -15,7 +15,9 @@ class Game {
         // Initialize screens
         this.screens = {
             title: new TitleScreen(this),
+            nameInput: new NameInputScreen(this),
             tutorial: new TutorialScreen(this),
+            colorSelection: new ColorSelectionScreen(this),
             level: new LevelScreen(this),
             transition: new TransitionScreen(this),
             valentine: new ValentineScreen(this)
@@ -24,9 +26,11 @@ class Game {
         // Current screen
         this.currentScreen = null;
         
-        // Game state
+        // Game state - stores player preferences and progress
         this.state = {
-            completedLevels: []
+            playerName: '',        // Player's name (optional)
+            lightColor: null,      // Selected light color
+            completedLevels: []    // Completed level indices
         };
         
         // Input handling
@@ -126,6 +130,24 @@ class Game {
         
         this.currentScreen = screen;
         screen.enter(data);
+    }
+
+    /**
+     * Get personalized dialogue text
+     * Replaces {name} placeholder with player's name if available
+     */
+    getPersonalizedDialogue(text) {
+        if (!text) return '';
+        
+        const name = this.state.playerName;
+        
+        if (name) {
+            // Replace {name} with ", [Name]"
+            return text.replace(/\{name\}/g, `, ${name}`);
+        } else {
+            // Remove {name} placeholder entirely
+            return text.replace(/\{name\}/g, '');
+        }
     }
 
     /**
