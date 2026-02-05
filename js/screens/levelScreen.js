@@ -342,24 +342,338 @@ class LevelScreen {
      * Draw level-specific background
      */
     drawLevelBackground(ctx) {
-        // Each level has a slightly different atmosphere
-        const colors = [
-            ['#fef9f0', '#f5f0e8'], // Level 1 - warm cream
-            ['#f0f5f0', '#e8f0e8'], // Level 2 - cool green
-            ['#fff0f5', '#ffe8f0']  // Level 3 - soft pink
-        ];
-        
-        const [color1, color2] = colors[this.currentLevelIndex] || colors[0];
-        
+        switch(this.currentLevelIndex) {
+            case 0:
+                this.drawAwakeningGroveBackground(ctx);
+                break;
+            case 1:
+                this.drawWhisperingWoodsBackground(ctx);
+                break;
+            case 2:
+                this.drawHeartwoodHavenBackground(ctx);
+                break;
+            default:
+                this.drawAwakeningGroveBackground(ctx);
+        }
+    }
+
+    /**
+     * Level 1: Awakening Grove - Dawn breaking, warm and inviting
+     */
+    drawAwakeningGroveBackground(ctx) {
+        // Sky gradient - warm sunrise colors
         const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
-        gradient.addColorStop(0, color1);
-        gradient.addColorStop(1, color2);
+        gradient.addColorStop(0, '#ffeaa7');  // Soft yellow
+        gradient.addColorStop(0.3, '#ffd89b'); // Warm gold
+        gradient.addColorStop(0.6, '#fef9f0'); // Cream
+        gradient.addColorStop(1, '#f5f0e8');   // Warm base
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
-        
-        // Draw ground
-        ctx.fillStyle = 'rgba(168, 198, 159, 0.3)';
+
+        // Sun/light source
+        const sunGlow = ctx.createRadialGradient(650, 80, 0, 650, 80, 120);
+        sunGlow.addColorStop(0, 'rgba(255, 235, 167, 0.6)');
+        sunGlow.addColorStop(0.5, 'rgba(255, 216, 155, 0.3)');
+        sunGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = sunGlow;
+        ctx.beginPath();
+        ctx.arc(650, 80, 120, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Distant hills
+        ctx.fillStyle = 'rgba(168, 198, 159, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(0, 280);
+        ctx.quadraticCurveTo(200, 240, 400, 260);
+        ctx.quadraticCurveTo(600, 280, CONFIG.canvas.width, 250);
+        ctx.lineTo(CONFIG.canvas.width, CONFIG.canvas.height);
+        ctx.lineTo(0, CONFIG.canvas.height);
+        ctx.fill();
+
+        // Small awakening flowers
+        const flowerColors = ['#ffb3ba', '#ffd89b', '#ffe680'];
+        for (let i = 0; i < 8; i++) {
+            const x = 80 + i * 90;
+            const y = CONFIG.canvas.height - 60 - Math.random() * 20;
+            const color = flowerColors[i % flowerColors.length];
+            
+            // Petals
+            ctx.fillStyle = color;
+            for (let p = 0; p < 5; p++) {
+                const angle = (p / 5) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.arc(
+                    x + Math.cos(angle) * 5,
+                    y + Math.sin(angle) * 5,
+                    3,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            }
+            
+            // Center
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Ground with grass texture
+        ctx.fillStyle = '#b8d4a8';
         ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
+        
+        // Grass blades
+        ctx.strokeStyle = 'rgba(127, 182, 158, 0.4)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 40; i++) {
+            const x = Math.random() * CONFIG.canvas.width;
+            const y = CONFIG.canvas.height - Math.random() * 70;
+            const height = 8 + Math.random() * 12;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.quadraticCurveTo(x + 1, y - height / 2, x, y - height);
+            ctx.stroke();
+        }
+    }
+
+    /**
+     * Level 2: Whispering Woods - Mysterious forest with dappled light
+     */
+    drawWhisperingWoodsBackground(ctx) {
+        // Sky gradient - cool forest tones
+        const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
+        gradient.addColorStop(0, '#d4e8e0');  // Pale mint
+        gradient.addColorStop(0.4, '#e8f5f0'); // Very light green
+        gradient.addColorStop(1, '#e8f0e8');   // Soft green-white
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+
+        // Distant trees (silhouettes)
+        ctx.fillStyle = 'rgba(74, 124, 89, 0.15)';
+        const treeSilhouettes = [
+            { x: 100, y: 200, width: 40, height: 200 },
+            { x: 250, y: 180, width: 50, height: 220 },
+            { x: 450, y: 190, width: 45, height: 210 },
+            { x: 650, y: 170, width: 55, height: 230 }
+        ];
+        
+        treeSilhouettes.forEach(tree => {
+            // Trunk
+            ctx.fillRect(tree.x - tree.width / 6, tree.y, tree.width / 3, tree.height);
+            
+            // Foliage
+            ctx.beginPath();
+            ctx.ellipse(tree.x, tree.y + 30, tree.width / 2, tree.width / 1.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Light rays filtering through trees
+        ctx.save();
+        ctx.globalAlpha = 0.15;
+        for (let i = 0; i < 5; i++) {
+            const x = 150 + i * 140;
+            const rayGradient = ctx.createLinearGradient(x, 0, x, CONFIG.canvas.height - 100);
+            rayGradient.addColorStop(0, 'rgba(255, 255, 200, 0.3)');
+            rayGradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = rayGradient;
+            ctx.beginPath();
+            ctx.moveTo(x - 20, 0);
+            ctx.lineTo(x + 20, 0);
+            ctx.lineTo(x + 30, CONFIG.canvas.height - 100);
+            ctx.lineTo(x - 30, CONFIG.canvas.height - 100);
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // Mushrooms and forest undergrowth
+        const mushrooms = [
+            { x: 120, y: CONFIG.canvas.height - 50 },
+            { x: 200, y: CONFIG.canvas.height - 45 },
+            { x: 380, y: CONFIG.canvas.height - 55 },
+            { x: 550, y: CONFIG.canvas.height - 48 },
+            { x: 680, y: CONFIG.canvas.height - 52 }
+        ];
+        
+        mushrooms.forEach(mush => {
+            // Mushroom stem
+            ctx.fillStyle = '#e8dcc8';
+            ctx.fillRect(mush.x - 3, mush.y, 6, 15);
+            
+            // Mushroom cap
+            ctx.fillStyle = '#d4696e';
+            ctx.beginPath();
+            ctx.ellipse(mush.x, mush.y, 12, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Cap spots
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.beginPath();
+            ctx.arc(mush.x - 4, mush.y - 2, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(mush.x + 3, mush.y + 1, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Ferns
+        ctx.strokeStyle = 'rgba(90, 140, 105, 0.4)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+            const x = 150 + i * 110;
+            const y = CONFIG.canvas.height - 40;
+            
+            // Fern stem
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.quadraticCurveTo(x - 5, y - 15, x - 8, y - 25);
+            ctx.stroke();
+            
+            // Fern leaves
+            for (let j = 0; j < 5; j++) {
+                ctx.beginPath();
+                ctx.moveTo(x - j * 1.5, y - j * 5);
+                ctx.lineTo(x - j * 1.5 - 6, y - j * 5 - 3);
+                ctx.stroke();
+            }
+        }
+
+        // Ground
+        ctx.fillStyle = '#9db88f';
+        ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
+    }
+
+    /**
+     * Level 3: Heartwood Haven - Romantic, warm, heart-centered
+     */
+    drawHeartwoodHavenBackground(ctx) {
+        // Sky gradient - romantic pink/purple
+        const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
+        gradient.addColorStop(0, '#ffeef8');  // Very pale pink
+        gradient.addColorStop(0.5, '#fff0f5'); // Lavender blush
+        gradient.addColorStop(1, '#ffe8f0');   // Soft pink
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+
+        // Magical glow in the center/top
+        const magicGlow = ctx.createRadialGradient(400, 200, 0, 400, 200, 200);
+        magicGlow.addColorStop(0, 'rgba(255, 179, 186, 0.3)');
+        magicGlow.addColorStop(0.5, 'rgba(255, 215, 220, 0.15)');
+        magicGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = magicGlow;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+
+        // Heart-shaped tree/archway in background
+        ctx.save();
+        ctx.fillStyle = 'rgba(168, 198, 159, 0.25)';
+        ctx.translate(400, 150);
+        
+        // Draw heart shape
+        ctx.beginPath();
+        ctx.moveTo(0, 20);
+        ctx.bezierCurveTo(0, 0, -30, -20, -50, -10);
+        ctx.bezierCurveTo(-70, 0, -70, 30, -70, 30);
+        ctx.bezierCurveTo(-70, 50, -40, 80, 0, 110);
+        ctx.bezierCurveTo(40, 80, 70, 50, 70, 30);
+        ctx.bezierCurveTo(70, 30, 70, 0, 50, -10);
+        ctx.bezierCurveTo(30, -20, 0, 0, 0, 20);
+        ctx.fill();
+        ctx.restore();
+
+        // Floating petals
+        const time = Date.now() / 1000;
+        for (let i = 0; i < 15; i++) {
+            const x = (Math.sin(time * 0.3 + i) * 0.4 + 0.5) * CONFIG.canvas.width;
+            const y = (Math.cos(time * 0.2 + i * 0.5) * 0.3 + 0.3) * CONFIG.canvas.height;
+            const rotation = time + i;
+            const size = 3 + Math.sin(time + i) * 1;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            ctx.fillStyle = 'rgba(255, 179, 186, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, size, size * 1.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Rose bushes
+        const roseBushes = [
+            { x: 100, y: CONFIG.canvas.height - 90 },
+            { x: 300, y: CONFIG.canvas.height - 85 },
+            { x: 500, y: CONFIG.canvas.height - 95 },
+            { x: 700, y: CONFIG.canvas.height - 88 }
+        ];
+        
+        roseBushes.forEach(bush => {
+            // Bush foliage
+            ctx.fillStyle = 'rgba(127, 182, 158, 0.5)';
+            ctx.beginPath();
+            ctx.arc(bush.x, bush.y, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(bush.x + 15, bush.y - 5, 20, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(bush.x - 12, bush.y - 8, 18, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Roses
+            const roses = [
+                { dx: -8, dy: -15 },
+                { dx: 5, dy: -12 },
+                { dx: -15, dy: -5 },
+                { dx: 10, dy: -8 }
+            ];
+            
+            roses.forEach(rose => {
+                ctx.fillStyle = '#ffb3ba';
+                ctx.beginPath();
+                ctx.arc(bush.x + rose.dx, bush.y + rose.dy, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Rose highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.arc(bush.x + rose.dx - 1, bush.y + rose.dy - 1, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        });
+
+        // Heart-shaped stepping stones
+        ctx.fillStyle = 'rgba(200, 180, 170, 0.4)';
+        const stones = [
+            { x: 200, y: CONFIG.canvas.height - 50 },
+            { x: 350, y: CONFIG.canvas.height - 55 },
+            { x: 450, y: CONFIG.canvas.height - 52 },
+            { x: 600, y: CONFIG.canvas.height - 58 }
+        ];
+        
+        stones.forEach(stone => {
+            ctx.save();
+            ctx.translate(stone.x, stone.y);
+            ctx.scale(0.4, 0.4);
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 10);
+            ctx.bezierCurveTo(0, 5, -10, -5, -15, 0);
+            ctx.bezierCurveTo(-20, 5, -20, 15, 0, 25);
+            ctx.bezierCurveTo(20, 15, 20, 5, 15, 0);
+            ctx.bezierCurveTo(10, -5, 0, 5, 0, 10);
+            ctx.fill();
+            ctx.restore();
+        });
+
+        // Ground
+        ctx.fillStyle = '#d4c4b4';
+        ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
+        
+        // Soft grass overlay
+        ctx.fillStyle = 'rgba(168, 198, 159, 0.3)';
+        ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 40);
     }
 
     /**
