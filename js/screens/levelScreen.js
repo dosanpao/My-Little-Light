@@ -291,8 +291,15 @@ class LevelScreen {
         this.player.velocityX = 0;
         this.player.velocityY = 0;
         
-        // Reset collectibles
-        this.collectibles.forEach(c => c.collected = false);
+        // Reset collectibles and their absorption state
+        this.collectibles.forEach(c => {
+            c.collected = false;
+            c.isBeingAbsorbed = false;
+            c.absorptionProgress = 0;
+            c.justCollected = false;
+            c.x = c.startX;
+            c.y = c.startY;
+        });
         
         // Reset black light
         if (this.blackLight) {
@@ -378,7 +385,7 @@ class LevelScreen {
         // Update entities
         this.player.update(this.obstacles);
         this.guide.update();
-        this.collectibles.forEach(c => c.update());
+        this.collectibles.forEach(c => c.update(this.player));
         
         // NEW: Update Black Light
         if (this.blackLight) {
@@ -392,7 +399,12 @@ class LevelScreen {
         
         // Check collectible collection
         this.collectibles.forEach(collectible => {
-            if (collectible.checkCollection(this.player)) {
+            // Start absorption if player touches orb
+            collectible.checkCollection(this.player);
+            
+            // Only update UI and check completion when orb is fully collected
+            if (collectible.justCollected) {
+                collectible.justCollected = false; // Reset flag
                 this.updateUI();
                 this.checkLevelComplete();
             }

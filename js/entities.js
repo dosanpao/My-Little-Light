@@ -535,44 +535,138 @@ class Collectible {
         this.color = CONFIG.collectible.color;
         this.collected = false;
         this.time = Math.random() * Math.PI * 2; // Random start for animation variety
+        
+        // Absorption animation properties
+        this.isBeingAbsorbed = false;
+        this.absorptionProgress = 0;
+        this.absorptionDuration = 30; // frames (0.5 seconds at 60fps)
+        this.targetX = 0;
+        this.targetY = 0;
+        this.startX = x;
+        this.startY = y;
+        this.justCollected = false; // Flag for when collection completes
+    }
+    
+    /**
+     * Start absorption animation toward player
+     */
+    startAbsorption(playerX, playerY) {
+        this.isBeingAbsorbed = true;
+        this.absorptionProgress = 0;
+        this.targetX = playerX;
+        this.targetY = playerY;
+        this.startX = this.x;
+        this.startY = this.y;
     }
 
     /**
      * Update collectible animation
      */
-    update() {
+    update(player = null) {
         this.time += 0.08;
+        
+        // Update absorption animation
+        if (this.isBeingAbsorbed) {
+            this.absorptionProgress++;
+            
+            // Update target to player's current position if player is provided
+            if (player) {
+                this.targetX = player.x;
+                this.targetY = player.y;
+            }
+            
+            // Ease-in curve for smooth acceleration
+            const t = this.absorptionProgress / this.absorptionDuration;
+            const easeT = t * t * (3 - 2 * t); // Smoothstep easing
+            
+            // Move toward target (player's current position)
+            this.x = this.startX + (this.targetX - this.startX) * easeT;
+            this.y = this.startY + (this.targetY - this.startY) * easeT;
+            
+            // Mark as collected when animation is complete
+            if (this.absorptionProgress >= this.absorptionDuration) {
+                this.collected = true;
+                this.justCollected = true; // Signal that collection just completed
+            }
+        }
     }
 
     /**
      * Draw the collectible
      */
     draw(ctx) {
-        if (this.collected) return;
+        // Don't draw if fully collected and not animating
+        if (this.collected && !this.isBeingAbsorbed) return;
 
-        const scale = 1 + Math.sin(this.time) * 0.1; // Pulse animation
+        const basePulse = 1 + Math.sin(this.time) * 0.1; // Gentle pulse animation
+        
+        // Calculate absorption progress (0 to 1)
+        let t = 0;
+        if (this.isBeingAbsorbed) {
+            t = Math.min(this.absorptionProgress / this.absorptionDuration, 1);
+        }
+        
+        // Calculate scaling factors
+        const absorptionScale = 1 - (t * 0.8); // Shrink to 20% of original size
+        const finalScale = basePulse * absorptionScale;
+        const alpha = 1 - (t * 0.9); // Fade out
+        
+        // Don't draw if completely faded
+        if (alpha <= 0.01) return;
+        
+        ctx.save();
+        ctx.globalAlpha = alpha;
 
-        // Glow
-        Utils.drawGlow(ctx, this.x, this.y, this.size * 2, CONFIG.collectible.glowColor);
+        // Draw glow (scales down with orb)
+        const glowRadius = this.size * 2 * absorptionScale;
+        const gradient = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, glowRadius
+        );
+        gradient.addColorStop(0, CONFIG.collectible.glowColor);
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
 
-        // Orb
+        // Draw main orb
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, (this.size / 2) * scale, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, (this.size / 2) * finalScale, 0, Math.PI * 2);
         ctx.fill();
 
-        // Shine
+        // Draw shine highlight
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.beginPath();
-        ctx.arc(this.x - 3, this.y - 3, (this.size / 4) * scale, 0, Math.PI * 2);
+        ctx.arc(this.x - 3 * finalScale, this.y - 3 * finalScale, (this.size / 4) * finalScale, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Draw absorption particles (only while being absorbed)
+        if (this.isBeingAbsorbed && t < 0.9) {
+            const particleCount = 6;
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (this.time * 3 + i * (Math.PI * 2 / particleCount));
+                const distance = this.size * (1 - t) * 1.2;
+                const px = this.x + Math.cos(angle) * distance;
+                const py = this.y + Math.sin(angle) * distance;
+                const particleAlpha = (1 - t) * 0.5;
+                
+                ctx.fillStyle = `rgba(255, 179, 186, ${particleAlpha})`;
+                ctx.beginPath();
+                ctx.arc(px, py, 2 * (1 - t * 0.5), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        ctx.restore();
     }
 
     /**
      * Check if player collected this item
      */
     checkCollection(player) {
-        if (this.collected) return false;
+        if (this.collected || this.isBeingAbsorbed) return;
 
         const distance = Math.sqrt(
             Math.pow(this.x - player.x, 2) + 
@@ -580,10 +674,9 @@ class Collectible {
         );
 
         if (distance < this.size + player.size / 2) {
-            this.collected = true;
-            return true;
+            // Start absorption animation instead of immediately collecting
+            this.startAbsorption(player.x, player.y);
         }
-        return false;
     }
 }
 
