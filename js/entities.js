@@ -609,3 +609,225 @@ class Obstacle {
         ctx.fill();
     }
 }
+
+/**
+ * Black Light Enemy class
+ * Hostile entity that chases the player and causes respawn on contact
+ */
+class BlackLight {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.startX = x; // Remember spawn position for reset
+        this.startY = y;
+        this.size = 35;
+        this.speed = 1.5; // Base chase speed (will vary by level)
+        
+        // AI state
+        this.isActive = false; // Becomes true when player moves
+        this.targetX = x;
+        this.targetY = y;
+        
+        // Physics for smooth movement
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.acceleration = 0.15; // Slower acceleration than player
+        this.maxSpeed = 2.5; // Will be set by level
+        
+        // Animation
+        this.time = 0;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        
+        // Visual effect
+        this.distortionPhase = 0;
+    }
+
+    /**
+     * Set chase speed (called by level config)
+     */
+    setSpeed(speed) {
+        this.maxSpeed = speed;
+    }
+
+    /**
+     * Activate the Black Light (when player first moves)
+     */
+    activate() {
+        this.isActive = true;
+    }
+
+    /**
+     * Reset to starting position
+     */
+    reset() {
+        this.x = this.startX;
+        this.y = this.startY;
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.isActive = false;
+    }
+
+    /**
+     * Update Black Light AI and movement
+     * AI Logic: Smooth pursuit with obstacle avoidance
+     */
+    update(player, obstacles = []) {
+        this.time += 0.08;
+        this.distortionPhase += 0.1;
+        
+        // Don't move until activated
+        if (!this.isActive) {
+            return;
+        }
+
+        // Calculate direction to player
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance > 5) { // Don't move if very close
+            // Normalize direction
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+
+            // Calculate target velocity
+            const targetVelX = dirX * this.maxSpeed;
+            const targetVelY = dirY * this.maxSpeed;
+
+            // Smooth acceleration toward target velocity
+            this.velocityX += (targetVelX - this.velocityX) * this.acceleration;
+            this.velocityY += (targetVelY - this.velocityY) * this.acceleration;
+
+            // Calculate new position
+            let newX = this.x + this.velocityX;
+            let newY = this.y + this.velocityY;
+
+            // Clamp to canvas bounds
+            newX = Utils.clamp(newX, this.size / 2, CONFIG.canvas.width - this.size / 2);
+            newY = Utils.clamp(newY, this.size / 2, CONFIG.canvas.height - this.size / 2);
+
+            // Check collision with obstacles (similar to player collision)
+            let canMove = true;
+            for (let obstacle of obstacles) {
+                const blackLightRect = {
+                    x: newX - this.size / 2,
+                    y: newY - this.size / 2,
+                    width: this.size,
+                    height: this.size
+                };
+                
+                if (Utils.checkCollision(blackLightRect, obstacle)) {
+                    canMove = false;
+                    
+                    // Bounce back slightly and try to slide around obstacle
+                    this.velocityX *= -0.5;
+                    this.velocityY *= -0.5;
+                    
+                    // Add slight perpendicular movement to slide around
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        this.velocityY += (Math.random() - 0.5) * 2;
+                    } else {
+                        this.velocityX += (Math.random() - 0.5) * 2;
+                    }
+                    break;
+                }
+            }
+
+            // Update position if no collision
+            if (canMove) {
+                this.x = newX;
+                this.y = newY;
+            }
+        } else {
+            // Very close - slow down
+            this.velocityX *= 0.9;
+            this.velocityY *= 0.9;
+        }
+    }
+
+    /**
+     * Check collision with player
+     */
+    checkPlayerCollision(player) {
+        const dx = this.x - player.x;
+        const dy = this.y - player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Collision if distance less than combined radii
+        return distance < (this.size / 2 + player.size / 2);
+    }
+
+    /**
+     * Draw the Black Light with ominous effects
+     */
+    draw(ctx) {
+        const pulse = 1 + Math.sin(this.time + this.pulsePhase) * 0.1;
+        
+        // Distortion effect (subtle ripple)
+        ctx.save();
+        
+        // Draw outer dark aura (multiple layers for depth)
+        for (let i = 4; i >= 0; i--) {
+            const glowRadius = (this.size + i * 12) * pulse;
+            const alpha = (0.25 - i * 0.04) * (this.isActive ? 1 : 0.5);
+            
+            const gradient = ctx.createRadialGradient(
+                this.x, this.y, 0,
+                this.x, this.y, glowRadius
+            );
+            
+            // Dark purple to black gradient
+            gradient.addColorStop(0, `rgba(60, 20, 80, ${alpha * 0.8})`);
+            gradient.addColorStop(0.4, `rgba(40, 10, 60, ${alpha * 0.6})`);
+            gradient.addColorStop(0.7, `rgba(20, 5, 30, ${alpha * 0.3})`);
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Core dark orb
+        ctx.fillStyle = '#1a0a2e';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, (this.size / 2) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner purple glow
+        const innerGlow = ctx.createRadialGradient(
+            this.x, this.y, 0,
+            this.x, this.y, (this.size / 3) * pulse
+        );
+        innerGlow.addColorStop(0, 'rgba(80, 40, 100, 0.8)');
+        innerGlow.addColorStop(1, 'rgba(40, 20, 60, 0.3)');
+        ctx.fillStyle = innerGlow;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, (this.size / 3) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Dark center void
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, (this.size / 6) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Distortion particles (if active)
+        if (this.isActive) {
+            for (let i = 0; i < 6; i++) {
+                const angle = (this.distortionPhase + i * Math.PI / 3);
+                const distance = 25 + Math.sin(this.time * 1.5 + i) * 8;
+                const px = this.x + Math.cos(angle) * distance;
+                const py = this.y + Math.sin(angle) * distance;
+                const particleAlpha = Math.sin(this.time * 2 + i) * 0.3 + 0.4;
+                
+                ctx.fillStyle = `rgba(60, 20, 80, ${particleAlpha})`;
+                ctx.beginPath();
+                ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        ctx.restore();
+    }
+}

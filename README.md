@@ -318,7 +318,6 @@ draw(ctx) {
 
 Feel free to customize and use this game for personal projects!
 
----
 
 Made with 💚 for a special someone
 

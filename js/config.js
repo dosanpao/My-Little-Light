@@ -98,6 +98,16 @@ const CONFIG = {
         level3Start: "This is the final gathering{name}. Take your time and enjoy the peace.",
         level3Complete: "The forest is whole again, thanks to you{name}. You have a special heart.",
         
+        // NEW: Black Light levels (4-6)
+        level4Start: "Wait{name}... something feels wrong. That darkness... it isn't like you.",
+        level4Complete: "You made it through{name}. But I fear this is only the beginning.",
+        
+        level5Start: "The shadow grows bolder{name}. If it touches you, everything will fade.",
+        level5Complete: "Your light persists{name}. Stay strong, we're almost there.",
+        
+        level6Start: "This is the final test{name}. Don't let the darkness claim you.",
+        level6Complete: "You've proven your light cannot be extinguished{name}. The forest is safe.",
+        
         transition: "One last thing{name}...",
         
         valentine: "Will you be my Valentine{name}?"
@@ -154,6 +164,72 @@ const CONFIG = {
                 { x: 400, y: 300 } // Heart center
             ],
             obstacles: [] // No obstacles - peaceful ending
+        },
+        
+        // NEW LEVELS WITH BLACK LIGHT
+        
+        // LEVEL 4 - Fading Grove (Introduction to Black Light)
+        {
+            name: "Fading Grove",
+            playerStart: { x: 100, y: 300 },
+            guidePosition: { x: 700, y: 100 },
+            blackLightStart: { x: 700, y: 500 }, // Far from player
+            blackLightSpeed: 1.8, // Slow chase speed
+            collectibles: [
+                { x: 250, y: 200 },
+                { x: 450, y: 150 },
+                { x: 550, y: 350 },
+                { x: 350, y: 450 }
+            ],
+            obstacles: [
+                { x: 350, y: 250, width: 100, height: 20 } // One simple obstacle
+            ]
+        },
+        
+        // LEVEL 5 - Eclipse Path (Increased difficulty)
+        {
+            name: "Eclipse Path",
+            playerStart: { x: 100, y: 100 },
+            guidePosition: { x: 700, y: 100 },
+            blackLightStart: { x: 600, y: 400 }, // Closer to path
+            blackLightSpeed: 2.3, // Faster
+            collectibles: [
+                { x: 200, y: 200 },
+                { x: 400, y: 150 },
+                { x: 300, y: 350 },
+                { x: 500, y: 450 },
+                { x: 650, y: 300 }
+            ],
+            obstacles: [
+                { x: 250, y: 250, width: 120, height: 20 },
+                { x: 450, y: 200, width: 20, height: 180 },
+                { x: 350, y: 400, width: 150, height: 20 },
+                { x: 550, y: 350, width: 20, height: 100 }
+            ]
+        },
+        
+        // LEVEL 6 - Last Light Clearing (Emotional climax, fair but tense)
+        {
+            name: "Last Light Clearing",
+            playerStart: { x: 400, y: 500 },
+            guidePosition: { x: 400, y: 100 },
+            blackLightStart: { x: 400, y: 300 }, // Center of map (dramatic)
+            blackLightSpeed: 2.5, // Fast but not unfair
+            collectibles: [
+                { x: 200, y: 200 },
+                { x: 600, y: 200 },
+                { x: 200, y: 400 },
+                { x: 600, y: 400 },
+                { x: 100, y: 300 },
+                { x: 700, y: 300 }
+            ],
+            obstacles: [
+                // Obstacles provide safe zones
+                { x: 180, y: 280, width: 20, height: 140 },
+                { x: 600, y: 280, width: 20, height: 140 },
+                { x: 300, y: 180, width: 200, height: 20 },
+                { x: 300, y: 420, width: 200, height: 20 }
+            ]
         }
     ]
 };

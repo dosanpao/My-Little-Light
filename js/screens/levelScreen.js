@@ -34,6 +34,14 @@ class LevelScreen {
         this.dialogueFadeOpacity = 1;
         this.dialogueClickBound = false;
         
+        // NEW: Black Light enemy properties
+        this.blackLight = null;
+        this.isDying = false; // Player caught by black light
+        this.deathFadeProgress = 0;
+        this.deathFadeDuration = 90; // 1.5 seconds at 60fps
+        this.respawnDelay = 120; // 2 seconds total (fade + pause)
+        this.deathTimer = 0;
+        
         // Setup next level button
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             this.proceedToNext();
@@ -42,7 +50,7 @@ class LevelScreen {
 
     /**
      * Called when entering this screen
-     * @param {number} levelIndex - Which level to load (0, 1, or 2)
+     * @param {number} levelIndex - Which level to load (0, 1, 2, 3, 4, or 5)
      */
     enter(levelIndex = 0) {
         this.currentLevelIndex = levelIndex;
@@ -53,6 +61,11 @@ class LevelScreen {
         this.fadeStartTime = 0;
         this.dialogueFadeOpacity = 1;
         this.dialogueClickBound = false;
+        
+        // Reset death state
+        this.isDying = false;
+        this.deathFadeProgress = 0;
+        this.deathTimer = 0;
         
         Utils.hideAllScreens();
         Utils.showUI('levelUI');
@@ -118,6 +131,25 @@ class LevelScreen {
         this.obstacles = levelData.obstacles.map(obs => 
             new Obstacle(obs.x, obs.y, obs.width, obs.height)
         );
+        
+        // NEW: Create Black Light if level has one (levels 4-6)
+        this.blackLight = null;
+        if (levelData.blackLightStart) {
+            this.blackLight = new BlackLight(
+                levelData.blackLightStart.x, 
+                levelData.blackLightStart.y
+            );
+            
+            // Set speed based on level config
+            if (levelData.blackLightSpeed) {
+                this.blackLight.setSpeed(levelData.blackLightSpeed);
+            }
+        }
+        
+        // Reset death state
+        this.isDying = false;
+        this.deathFadeProgress = 0;
+        this.deathTimer = 0;
     }
 
     /**
@@ -234,9 +266,77 @@ class LevelScreen {
     }
 
     /**
+     * Handle player being caught by Black Light
+     */
+    handlePlayerDeath() {
+        if (this.isDying) return; // Already dying
+        
+        this.isDying = true;
+        this.deathTimer = 0;
+        this.deathFadeProgress = 0;
+        
+        // Disable player movement
+        this.player.keys = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        };
+    }
+
+    /**
+     * Respawn player at start position
+     */
+    respawnPlayer() {
+        const levelData = CONFIG.levels[this.currentLevelIndex];
+        
+        // Reset player position and velocity
+        this.player.x = levelData.playerStart.x;
+        this.player.y = levelData.playerStart.y;
+        this.player.velocityX = 0;
+        this.player.velocityY = 0;
+        
+        // Reset collectibles
+        this.collectibles.forEach(c => c.collected = false);
+        
+        // Reset black light
+        if (this.blackLight) {
+            this.blackLight.reset();
+        }
+        
+        // Reset death state
+        this.isDying = false;
+        this.deathFadeProgress = 0;
+        this.deathTimer = 0;
+        this.playerHasMoved = false;
+        
+        // Update UI
+        this.updateUI();
+    }
+
+    /**
      * Update level gameplay
      */
     update() {
+        // Handle death sequence
+        if (this.isDying) {
+            this.deathTimer++;
+            
+            // Fade to black over first 1.5 seconds
+            if (this.deathTimer <= this.deathFadeDuration) {
+                this.deathFadeProgress = this.deathTimer / this.deathFadeDuration;
+            } else {
+                this.deathFadeProgress = 1;
+            }
+            
+            // Respawn after full delay
+            if (this.deathTimer >= this.respawnDelay) {
+                this.respawnPlayer();
+            }
+            
+            return; // Don't update anything else during death
+        }
+        
         if (this.levelComplete) return;
         
         // Check if player has moved
@@ -247,6 +347,11 @@ class LevelScreen {
             if (isMoving) {
                 this.playerHasMoved = true;
                 this.fadeStartTime = 0; // Start counting from when movement begins
+                
+                // Activate Black Light when player first moves
+                if (this.blackLight) {
+                    this.blackLight.activate();
+                }
             }
         }
         
@@ -279,6 +384,16 @@ class LevelScreen {
         this.player.update(this.obstacles);
         this.guide.update();
         this.collectibles.forEach(c => c.update());
+        
+        // NEW: Update Black Light
+        if (this.blackLight) {
+            this.blackLight.update(this.player, this.obstacles);
+            
+            // Check collision with player
+            if (this.blackLight.checkPlayerCollision(this.player)) {
+                this.handlePlayerDeath();
+            }
+        }
         
         // Check collectible collection
         this.collectibles.forEach(collectible => {
@@ -346,11 +461,22 @@ class LevelScreen {
         // Draw guide
         this.guide.draw(ctx);
         
+        // NEW: Draw Black Light (before player so player is on top)
+        if (this.blackLight) {
+            this.blackLight.draw(ctx);
+        }
+        
         // Draw player
         this.player.draw(ctx);
         
         // Draw particles/ambiance
         this.drawAmbiance(ctx);
+        
+        // NEW: Draw death overlay (black fade)
+        if (this.isDying && this.deathFadeProgress > 0) {
+            ctx.fillStyle = `rgba(0, 0, 0, ${this.deathFadeProgress})`;
+            ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        }
     }
 
     /**
@@ -366,6 +492,15 @@ class LevelScreen {
                 break;
             case 2:
                 this.drawHeartwoodHavenBackground(ctx);
+                break;
+            case 3:
+                this.drawFadingGroveBackground(ctx);
+                break;
+            case 4:
+                this.drawEclipsePathBackground(ctx);
+                break;
+            case 5:
+                this.drawLastLightClearingBackground(ctx);
                 break;
             default:
                 this.drawAwakeningGroveBackground(ctx);
@@ -715,5 +850,151 @@ class LevelScreen {
             ctx.arc(x, y, 2, 0, Math.PI * 2);
             ctx.fill();
         }
+    }
+
+    /**
+     * Level 4: Fading Grove - Darker, ominous version of level 1
+     */
+    drawFadingGroveBackground(ctx) {
+        // Darker, desaturated gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
+        gradient.addColorStop(0, '#d4d8dc');  // Darker sky
+        gradient.addColorStop(0.6, '#e0dad0'); 
+        gradient.addColorStop(1, '#ccc4b8');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+
+        // Faded distant trees (darker)
+        ctx.fillStyle = 'rgba(100, 110, 100, 0.25)';
+        for (let i = 0; i < 4; i++) {
+            const x = 150 + i * 180;
+            const y = 250 + Math.sin(i) * 40;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y - 40);
+            ctx.lineTo(x - 30, y + 20);
+            ctx.lineTo(x + 30, y + 20);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Wilted flowers
+        const flowers = [
+            { x: 150, y: CONFIG.canvas.height - 40 },
+            { x: 350, y: CONFIG.canvas.height - 50 },
+            { x: 550, y: CONFIG.canvas.height - 45 }
+        ];
+        
+        flowers.forEach(flower => {
+            ctx.fillStyle = 'rgba(140, 130, 140, 0.4)';
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 5) * Math.PI * 2;
+                const petalX = flower.x + Math.cos(angle) * 5;
+                const petalY = flower.y + Math.sin(angle) * 5;
+                ctx.beginPath();
+                ctx.arc(petalX, petalY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Ground
+        ctx.fillStyle = '#a8a69f';
+        ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
+    }
+
+    /**
+     * Level 5: Eclipse Path - Dark purple/grey with ominous atmosphere
+     */
+    drawEclipsePathBackground(ctx) {
+        // Very dark gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
+        gradient.addColorStop(0, '#3d3850');  // Dark purple
+        gradient.addColorStop(0.6, '#4a4555'); 
+        gradient.addColorStop(1, '#403d48');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+
+        // Faint stars (ominous)
+        const time = Date.now() / 2000;
+        for (let i = 0; i < 20; i++) {
+            const x = (Math.sin(time * 0.2 + i * 0.5) * 0.3 + 0.5) * CONFIG.canvas.width;
+            const y = (Math.cos(time * 0.15 + i * 0.7) * 0.25 + 0.25) * CONFIG.canvas.height;
+            const alpha = Math.sin(time * 3 + i) * 0.3 + 0.4;
+            
+            ctx.fillStyle = `rgba(180, 170, 200, ${alpha * 0.5})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Dark silhouette trees
+        ctx.fillStyle = 'rgba(30, 25, 40, 0.6)';
+        for (let i = 0; i < 5; i++) {
+            const x = 120 + i * 150;
+            const y = 300 + Math.sin(i) * 50;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y - 60);
+            ctx.lineTo(x - 40, y + 30);
+            ctx.lineTo(x + 40, y + 30);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Ground
+        ctx.fillStyle = '#35323d';
+        ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
+    }
+
+    /**
+     * Level 6: Last Light Clearing - Emotionally tense but not hopeless
+     */
+    drawLastLightClearingBackground(ctx) {
+        // Deep twilight gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
+        gradient.addColorStop(0, '#2a2540');  // Deep purple
+        gradient.addColorStop(0.5, '#3d3555'); 
+        gradient.addColorStop(1, '#4a4258');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+
+        // Single clearing in center (symbolic)
+        const clearingGlow = ctx.createRadialGradient(400, 300, 0, 400, 300, 150);
+        clearingGlow.addColorStop(0, 'rgba(100, 80, 120, 0.3)');
+        clearingGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = clearingGlow;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+
+        // Bare tree silhouettes (emotional weight)
+        ctx.strokeStyle = 'rgba(40, 35, 50, 0.7)';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 3; i++) {
+            const x = 200 + i * 200;
+            const y = CONFIG.canvas.height - 100;
+            
+            // Trunk
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y - 100);
+            ctx.stroke();
+            
+            // Branches
+            for (let j = 0; j < 4; j++) {
+                const branchY = y - 30 - j * 20;
+                ctx.beginPath();
+                ctx.moveTo(x, branchY);
+                ctx.lineTo(x - 20 - j * 5, branchY - 15);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x, branchY);
+                ctx.lineTo(x + 20 + j * 5, branchY - 15);
+                ctx.stroke();
+            }
+        }
+
+        // Ground
+        ctx.fillStyle = '#2d2838';
+        ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
     }
 }
