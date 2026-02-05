@@ -33,6 +33,8 @@ class LevelScreen {
         this.fadeStartTime = 0;
         this.dialogueFadeOpacity = 1;
         this.dialogueClickBound = false;
+        this.canvasClickBound = false;
+        this.levelCompleteClickBound = false;
         
         // NEW: Black Light enemy properties
         this.blackLight = null;
@@ -41,11 +43,6 @@ class LevelScreen {
         this.deathFadeDuration = 90; // 1.5 seconds at 60fps
         this.respawnDelay = 120; // 2 seconds total (fade + pause)
         this.deathTimer = 0;
-        
-        // Setup next level button
-        document.getElementById('nextLevelBtn').addEventListener('click', () => {
-            this.proceedToNext();
-        });
     }
 
     /**
@@ -61,6 +58,13 @@ class LevelScreen {
         this.fadeStartTime = 0;
         this.dialogueFadeOpacity = 1;
         this.dialogueClickBound = false;
+        this.canvasClickBound = false;
+        
+        // Clean up any existing Enter key handler from level complete
+        if (this.enterKeyHandler) {
+            document.removeEventListener('keydown', this.enterKeyHandler);
+            this.enterKeyHandler = null;
+        }
         
         // Reset death state
         this.isDying = false;
@@ -73,40 +77,31 @@ class LevelScreen {
         this.loadLevel(levelIndex);
         this.updateUI();
         
-        // Setup click handler for dialogue - bind after a short delay
-        this.setupDialogueClick();
+        // Setup canvas click handler for dialogue dismissal
+        this.setupCanvasClick();
     }
     
     /**
-     * Setup click handler for dialogue dismissal
+     * Setup canvas click to dismiss dialogue (anywhere on screen)
      */
-    setupDialogueClick() {
-        // Remove any existing handler first
-        const dialogueBox = document.getElementById('levelDialogue');
-        if (dialogueBox) {
-            // Clone and replace to remove old listeners
-            const newDialogueBox = dialogueBox.cloneNode(true);
-            dialogueBox.parentNode.replaceChild(newDialogueBox, dialogueBox);
-            
-            // Add new click handler
-            newDialogueBox.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+    setupCanvasClick() {
+        if (this.canvasClickBound) return;
+        
+        const canvas = this.game.canvas;
+        const clickHandler = (e) => {
+            // Only dismiss dialogue if it's showing and not during level complete
+            if (this.showingDialogue && !this.levelComplete) {
                 this.dismissDialogue();
-            }, false);
-            
-            // Also update the text element reference
-            const textElement = newDialogueBox.querySelector('#levelDialogueText');
-            if (textElement) {
-                textElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.dismissDialogue();
-                }, false);
             }
-            
-            this.dialogueClickBound = true;
-        }
+            // If level is complete, proceed to next
+            else if (this.levelComplete) {
+                this.proceedToNext();
+            }
+        };
+        
+        canvas.addEventListener('click', clickHandler);
+        this.canvasClickBound = true;
+        this.canvasClickHandler = clickHandler;
     }
 
     /**
@@ -426,12 +421,38 @@ class LevelScreen {
         
         const message = this.getLevelDialogue('complete');
         document.getElementById('completionMessage').textContent = message;
+        
+        // Add click handler to level complete UI
+        const levelCompleteUI = document.getElementById('levelCompleteUI');
+        if (levelCompleteUI && !this.levelCompleteClickBound) {
+            levelCompleteUI.addEventListener('click', () => {
+                this.proceedToNext();
+            });
+            this.levelCompleteClickBound = true;
+        }
+        
+        // Add Enter key handler only when level complete shows
+        if (!this.enterKeyHandler) {
+            this.enterKeyHandler = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.proceedToNext();
+                }
+            };
+            document.addEventListener('keydown', this.enterKeyHandler);
+        }
     }
 
     /**
      * Proceed to next level or transition
      */
     proceedToNext() {
+        // Clean up Enter key handler
+        if (this.enterKeyHandler) {
+            document.removeEventListener('keydown', this.enterKeyHandler);
+            this.enterKeyHandler = null;
+        }
+        
         if (this.currentLevelIndex < CONFIG.levels.length - 1) {
             // Go to next level
             this.game.changeScreen('level', this.currentLevelIndex + 1);

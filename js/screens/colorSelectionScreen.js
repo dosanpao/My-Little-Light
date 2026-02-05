@@ -10,6 +10,7 @@ class ColorSelectionScreen {
         this.selectedColor = null;
         this.previewLight = null;
         this.buttonSetup = false;
+        this.enterKeyBound = false;
     }
 
     /**
@@ -18,6 +19,9 @@ class ColorSelectionScreen {
     enter() {
         Utils.hideAllScreens();
         Utils.showUI('colorSelectionUI');
+        
+        // Clean up any existing Enter key handler first
+        this.cleanup();
         
         // Set default selection
         this.selectedColor = CONFIG.lightColors[0];
@@ -39,6 +43,35 @@ class ColorSelectionScreen {
         
         // Highlight first color by default
         this.highlightColorButton(0);
+        
+        // Setup Enter key (after cleanup to ensure fresh handler)
+        this.setupEnterKey();
+    }
+    
+    /**
+     * Setup Enter key handler
+     */
+    setupEnterKey() {
+        this.enterKeyHandler = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.confirmColor();
+            }
+        };
+        
+        document.addEventListener('keydown', this.enterKeyHandler);
+        this.enterKeyBound = true;
+    }
+    
+    /**
+     * Cleanup Enter key handler when leaving
+     */
+    cleanup() {
+        if (this.enterKeyHandler) {
+            document.removeEventListener('keydown', this.enterKeyHandler);
+            this.enterKeyBound = false;
+            this.enterKeyHandler = null;
+        }
     }
 
     /**
@@ -120,6 +153,9 @@ class ColorSelectionScreen {
      * Confirm color selection and proceed
      */
     confirmColor() {
+        // Cleanup before leaving
+        this.cleanup();
+        
         // Store in game state
         this.game.state.lightColor = this.selectedColor;
         

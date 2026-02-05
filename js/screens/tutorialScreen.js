@@ -9,6 +9,7 @@ class TutorialScreen {
         this.guide = new Guide(CONFIG.canvas.width / 2, CONFIG.canvas.height - 200); // Bottom center
         this.currentDialogueIndex = 0;
         this.dialogueClickBound = false;
+        this.enterKeyBound = false;
     }
 
     /**
@@ -19,7 +20,38 @@ class TutorialScreen {
         Utils.showUI('tutorialUI');
         this.currentDialogueIndex = 0;
         this.showDialogue();
+        
+        // Clean up any existing handler first
+        this.cleanup();
+        
         this.setupDialogueClick();
+        this.setupEnterKey();
+    }
+    
+    /**
+     * Setup Enter key handler
+     */
+    setupEnterKey() {
+        this.enterKeyHandler = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.nextDialogue();
+            }
+        };
+        
+        document.addEventListener('keydown', this.enterKeyHandler);
+        this.enterKeyBound = true;
+    }
+    
+    /**
+     * Cleanup Enter key handler when leaving
+     */
+    cleanup() {
+        if (this.enterKeyHandler) {
+            document.removeEventListener('keydown', this.enterKeyHandler);
+            this.enterKeyBound = false;
+            this.enterKeyHandler = null;
+        }
     }
     
     /**
@@ -62,6 +94,8 @@ class TutorialScreen {
         if (this.currentDialogueIndex < CONFIG.dialogue.tutorial.length) {
             this.showDialogue();
         } else {
+            // Cleanup before leaving
+            this.cleanup();
             // Go to color selection before first level
             this.game.changeScreen('colorSelection');
         }
