@@ -17,21 +17,12 @@ class LevelScreen {
         this.playerHasMoved = false;
         this.fadeStartTime = 0;
         this.dialogueFadeOpacity = 1;
+        this.dialogueClickBound = false;
         
         // Setup next level button
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             this.proceedToNext();
         });
-        
-        // Setup click to dismiss dialogue
-        this.dialogueClickHandler = (e) => {
-            if (this.showingDialogue) {
-                const dialogueBox = document.getElementById('levelDialogue');
-                if (dialogueBox && !dialogueBox.classList.contains('hidden')) {
-                    this.dismissDialogue();
-                }
-            }
-        };
     }
 
     /**
@@ -46,6 +37,7 @@ class LevelScreen {
         this.playerHasMoved = false;
         this.fadeStartTime = 0;
         this.dialogueFadeOpacity = 1;
+        this.dialogueClickBound = false;
         
         Utils.hideAllScreens();
         Utils.showUI('levelUI');
@@ -53,8 +45,42 @@ class LevelScreen {
         this.loadLevel(levelIndex);
         this.updateUI();
         
-        // Add click listener to dismiss dialogue
-        document.addEventListener('click', this.dialogueClickHandler);
+        // Setup click handler for dialogue - bind after a short delay
+        this.setupDialogueClick();
+    }
+    
+    /**
+     * Setup click handler for dialogue dismissal
+     */
+    setupDialogueClick() {
+        // Remove any existing handler first
+        const dialogueBox = document.getElementById('levelDialogue');
+        if (dialogueBox) {
+            // Clone and replace to remove old listeners
+            const newDialogueBox = dialogueBox.cloneNode(true);
+            dialogueBox.parentNode.replaceChild(newDialogueBox, dialogueBox);
+            
+            // Add new click handler
+            newDialogueBox.addEventListener('click', (e) => {
+                console.log('Dialogue clicked!'); // Debug log
+                e.preventDefault();
+                e.stopPropagation();
+                this.dismissDialogue();
+            }, false);
+            
+            // Also update the text element reference
+            const textElement = newDialogueBox.querySelector('#levelDialogueText');
+            if (textElement) {
+                textElement.addEventListener('click', (e) => {
+                    console.log('Text clicked!'); // Debug log
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.dismissDialogue();
+                }, false);
+            }
+            
+            this.dialogueClickBound = true;
+        }
     }
 
     /**
@@ -99,9 +125,12 @@ class LevelScreen {
             document.getElementById('levelDialogueText').textContent = dialogue;
             dialogueBox.classList.remove('hidden');
             dialogueBox.style.opacity = this.dialogueFadeOpacity;
+            dialogueBox.style.display = 'block'; // Ensure it's visible
+            dialogueBox.style.pointerEvents = 'auto'; // Ensure clicks work
         } else {
             dialogueBox.classList.add('hidden');
             dialogueBox.style.opacity = 1; // Reset for next time
+            dialogueBox.style.display = 'none';
         }
     }
 
@@ -119,10 +148,24 @@ class LevelScreen {
      * Dismiss dialogue immediately (on click)
      */
     dismissDialogue() {
+        console.log('dismissDialogue called, showingDialogue:', this.showingDialogue); // Debug
+        
+        if (!this.showingDialogue) {
+            console.log('Already dismissed, returning'); // Debug
+            return; // Already dismissed
+        }
+        
         this.showingDialogue = false;
         this.dialogueFadeOpacity = 0;
-        this.updateUI();
-        document.removeEventListener('click', this.dialogueClickHandler);
+        
+        // Immediately hide the dialogue box
+        const dialogueBox = document.getElementById('levelDialogue');
+        if (dialogueBox) {
+            console.log('Hiding dialogue box'); // Debug
+            dialogueBox.classList.add('hidden');
+            dialogueBox.style.opacity = 1; // Reset for next time
+            dialogueBox.style.display = 'none'; // Force hide
+        }
     }
 
     /**
@@ -163,7 +206,6 @@ class LevelScreen {
                 if (this.dialogueFadeOpacity <= 0) {
                     this.showingDialogue = false;
                     this.updateUI();
-                    document.removeEventListener('click', this.dialogueClickHandler);
                 }
             }
         }
