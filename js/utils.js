@@ -62,8 +62,21 @@ const Utils = {
      * Hide all screen UIs
      */
     hideAllScreens() {
-        const screens = ['titleUI', 'tutorialUI', 'levelUI', 'levelCompleteUI', 'transitionUI', 'valentineUI'];
+        const screens = [
+            'titleUI', 
+            'nameInputUI', 
+            'tutorialUI', 
+            'colorSelectionUI', 
+            'levelUI', 
+            'levelCompleteUI', 
+            'transitionUI', 
+            'valentineUI',
+            'celebrationOverlay'
+        ];
         screens.forEach(screen => this.hideUI(screen));
+        
+        // Also hide floating dialogue boxes
+        this.hideUI('levelDialogue');
     },
 
     /**

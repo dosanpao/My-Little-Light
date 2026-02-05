@@ -14,11 +14,24 @@ class LevelScreen {
         this.levelComplete = false;
         this.showingDialogue = true;
         this.dialogueTimer = 0;
+        this.playerHasMoved = false;
+        this.fadeStartTime = 0;
+        this.dialogueFadeOpacity = 1;
         
         // Setup next level button
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
             this.proceedToNext();
         });
+        
+        // Setup click to dismiss dialogue
+        this.dialogueClickHandler = (e) => {
+            if (this.showingDialogue) {
+                const dialogueBox = document.getElementById('levelDialogue');
+                if (dialogueBox && !dialogueBox.classList.contains('hidden')) {
+                    this.dismissDialogue();
+                }
+            }
+        };
     }
 
     /**
@@ -29,13 +42,19 @@ class LevelScreen {
         this.currentLevelIndex = levelIndex;
         this.levelComplete = false;
         this.showingDialogue = true;
-        this.dialogueTimer = 180; // Show dialogue for 3 seconds (60fps * 3)
+        this.dialogueTimer = 120; // 2 seconds after movement (60fps * 2)
+        this.playerHasMoved = false;
+        this.fadeStartTime = 0;
+        this.dialogueFadeOpacity = 1;
         
         Utils.hideAllScreens();
         Utils.showUI('levelUI');
         
         this.loadLevel(levelIndex);
         this.updateUI();
+        
+        // Add click listener to dismiss dialogue
+        document.addEventListener('click', this.dialogueClickHandler);
     }
 
     /**
@@ -74,12 +93,15 @@ class LevelScreen {
         document.getElementById('objectiveText').textContent = `Collect: ${collected}/${total}`;
         
         // Show level start dialogue
+        const dialogueBox = document.getElementById('levelDialogue');
         if (this.showingDialogue) {
             const dialogue = this.getLevelDialogue('start');
             document.getElementById('levelDialogueText').textContent = dialogue;
-            document.getElementById('levelDialogue').classList.remove('hidden');
+            dialogueBox.classList.remove('hidden');
+            dialogueBox.style.opacity = this.dialogueFadeOpacity;
         } else {
-            document.getElementById('levelDialogue').classList.add('hidden');
+            dialogueBox.classList.add('hidden');
+            dialogueBox.style.opacity = 1; // Reset for next time
         }
     }
 
@@ -94,17 +116,55 @@ class LevelScreen {
     }
 
     /**
+     * Dismiss dialogue immediately (on click)
+     */
+    dismissDialogue() {
+        this.showingDialogue = false;
+        this.dialogueFadeOpacity = 0;
+        this.updateUI();
+        document.removeEventListener('click', this.dialogueClickHandler);
+    }
+
+    /**
      * Update level gameplay
      */
     update() {
         if (this.levelComplete) return;
         
-        // Hide dialogue after timer
-        if (this.showingDialogue) {
-            this.dialogueTimer--;
-            if (this.dialogueTimer <= 0) {
-                this.showingDialogue = false;
-                this.updateUI();
+        // Check if player has moved
+        if (!this.playerHasMoved && this.player) {
+            const isMoving = this.player.keys.up || this.player.keys.down || 
+                           this.player.keys.left || this.player.keys.right;
+            
+            if (isMoving) {
+                this.playerHasMoved = true;
+                this.fadeStartTime = 0; // Start counting from when movement begins
+            }
+        }
+        
+        // Handle dialogue fade after player moves
+        if (this.showingDialogue && this.playerHasMoved) {
+            this.fadeStartTime++;
+            
+            // After 2 seconds of movement, start fading
+            if (this.fadeStartTime >= this.dialogueTimer) {
+                // Fade over 1 second (60 frames)
+                const fadeFrames = 60;
+                const fadeProgress = (this.fadeStartTime - this.dialogueTimer) / fadeFrames;
+                this.dialogueFadeOpacity = Math.max(0, 1 - fadeProgress);
+                
+                // Apply fog-like fade to dialogue box
+                const dialogueBox = document.getElementById('levelDialogue');
+                if (dialogueBox) {
+                    dialogueBox.style.opacity = this.dialogueFadeOpacity;
+                }
+                
+                // Completely hide after fade completes
+                if (this.dialogueFadeOpacity <= 0) {
+                    this.showingDialogue = false;
+                    this.updateUI();
+                    document.removeEventListener('click', this.dialogueClickHandler);
+                }
             }
         }
         
@@ -139,6 +199,7 @@ class LevelScreen {
      */
     showLevelComplete() {
         Utils.hideUI('levelUI');
+        Utils.hideUI('levelDialogue');  // Explicitly hide dialogue
         Utils.showUI('levelCompleteUI');
         
         const message = this.getLevelDialogue('complete');
