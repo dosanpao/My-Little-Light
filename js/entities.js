@@ -103,51 +103,62 @@ class Player {
         newX = Utils.clamp(newX, this.size / 2, CONFIG.canvas.width - this.size / 2);
         newY = Utils.clamp(newY, this.size / 2, CONFIG.canvas.height - this.size / 2);
 
-        // Check collision with obstacles
-        let canMove = true;
+        // Sliding collision detection - check X and Y separately
+        let canMoveX = true;
+        let canMoveY = true;
+        
         for (let obstacle of obstacles) {
-            const playerRect = {
+            // Check X-axis movement only
+            const testXRect = {
                 x: newX - this.size / 2,
+                y: this.y - this.size / 2,
+                width: this.size,
+                height: this.size
+            };
+            
+            if (Utils.checkCollision(testXRect, obstacle)) {
+                canMoveX = false;
+                this.velocityX *= -0.3; // Bounce back slightly
+            }
+            
+            // Check Y-axis movement only
+            const testYRect = {
+                x: this.x - this.size / 2,
                 y: newY - this.size / 2,
                 width: this.size,
                 height: this.size
             };
             
-            if (Utils.checkCollision(playerRect, obstacle)) {
-                canMove = false;
-                // Bounce back slightly on collision
-                this.velocityX *= -0.3;
-                this.velocityY *= -0.3;
-                break;
+            if (Utils.checkCollision(testYRect, obstacle)) {
+                canMoveY = false;
+                this.velocityY *= -0.3; // Bounce back slightly
             }
         }
 
-        // Update position if no collision
-        if (canMove) {
-            // Add to trail if moving significantly
-            const movementSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
-            if (movementSpeed > 0.5) {
-                this.trail.push({
-                    x: this.x,
-                    y: this.y,
-                    alpha: 1,
-                    time: this.time,
-                    velocityX: this.velocityX,
-                    velocityY: this.velocityY
-                });
-                
-                // Limit trail length
-                if (this.trail.length > this.maxTrailLength) {
-                    this.trail.shift();
-                }
-            }
-            
+        // Apply movement independently for each axis
+        if (canMoveX) {
             this.x = newX;
+        }
+        if (canMoveY) {
             this.y = newY;
-        } else {
-            // If hit obstacle, stop at current position
-            newX = this.x;
-            newY = this.y;
+        }
+        
+        // Add to trail if moving significantly
+        const movementSpeed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
+        if (movementSpeed > 0.5) {
+            this.trail.push({
+                x: this.x,
+                y: this.y,
+                alpha: 1,
+                time: this.time,
+                velocityX: this.velocityX,
+                velocityY: this.velocityY
+            });
+            
+            // Limit trail length
+            if (this.trail.length > this.maxTrailLength) {
+                this.trail.shift();
+            }
         }
         
         // Fade trail smoothly
@@ -706,36 +717,49 @@ class BlackLight {
             newX = Utils.clamp(newX, this.size / 2, CONFIG.canvas.width - this.size / 2);
             newY = Utils.clamp(newY, this.size / 2, CONFIG.canvas.height - this.size / 2);
 
-            // Check collision with obstacles (similar to player collision)
-            let canMove = true;
+            // Sliding collision detection - check X and Y separately
+            let canMoveX = true;
+            let canMoveY = true;
+            
             for (let obstacle of obstacles) {
-                const blackLightRect = {
+                // Check X-axis movement only
+                const testXRect = {
                     x: newX - this.size / 2,
+                    y: this.y - this.size / 2,
+                    width: this.size,
+                    height: this.size
+                };
+                
+                if (Utils.checkCollision(testXRect, obstacle)) {
+                    canMoveX = false;
+                    this.velocityX *= -0.5; // Bounce back
+                    
+                    // Add perpendicular movement to slide around
+                    this.velocityY += (Math.random() - 0.5) * 2;
+                }
+                
+                // Check Y-axis movement only
+                const testYRect = {
+                    x: this.x - this.size / 2,
                     y: newY - this.size / 2,
                     width: this.size,
                     height: this.size
                 };
                 
-                if (Utils.checkCollision(blackLightRect, obstacle)) {
-                    canMove = false;
+                if (Utils.checkCollision(testYRect, obstacle)) {
+                    canMoveY = false;
+                    this.velocityY *= -0.5; // Bounce back
                     
-                    // Bounce back slightly and try to slide around obstacle
-                    this.velocityX *= -0.5;
-                    this.velocityY *= -0.5;
-                    
-                    // Add slight perpendicular movement to slide around
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        this.velocityY += (Math.random() - 0.5) * 2;
-                    } else {
-                        this.velocityX += (Math.random() - 0.5) * 2;
-                    }
-                    break;
+                    // Add perpendicular movement to slide around
+                    this.velocityX += (Math.random() - 0.5) * 2;
                 }
             }
 
-            // Update position if no collision
-            if (canMove) {
+            // Apply movement independently for each axis
+            if (canMoveX) {
                 this.x = newX;
+            }
+            if (canMoveY) {
                 this.y = newY;
             }
         } else {
