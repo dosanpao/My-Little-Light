@@ -58,7 +58,7 @@ const CONFIG = {
     // Player settings (now a light character)
     player: {
         size: 30,
-        speed: 6, // Increased from 4 for more responsive movement
+        speed: 3, // Increased from 4 for more responsive movement
         trailLength: 12 // Number of trail particles
     },
 

@@ -3,6 +3,21 @@
  * Main gameplay screen where player collects items
  */
 
+// Grass blades data (generated once)
+const grassBlades = Array.from({ length: 40 }, (_, i) => ({
+    x: Math.random() * CONFIG.canvas.width,
+    y: CONFIG.canvas.height - Math.random() * 70,
+    height: 8 + Math.random() * 12,
+    phase: Math.random() * Math.PI * 2
+}));
+// Awakening Grove flowers data (generated once)
+const awakeningFlowers = Array.from({ length: 8 }, (_, i) => ({
+    x: 80 + i * 90,
+    y: CONFIG.canvas.height - 60 - Math.random() * 20,
+    colorIndex: i % 3
+}));
+
+
 class LevelScreen {
     constructor(game) {
         this.game = game;
@@ -422,20 +437,28 @@ class LevelScreen {
         // Ground with grass texture
         ctx.fillStyle = '#b8d4a8';
         ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
-        
+
         // Grass blades
         ctx.strokeStyle = 'rgba(127, 182, 158, 0.4)';
         ctx.lineWidth = 2;
-        for (let i = 0; i < 40; i++) {
-            const x = Math.random() * CONFIG.canvas.width;
-            const y = CONFIG.canvas.height - Math.random() * 70;
-            const height = 8 + Math.random() * 12;
-            
+
+        const time = performance.now() * 0.002;
+
+        for (let i = 0; i < grassBlades.length; i++) {
+            const blade = grassBlades[i];
+            const sway = Math.sin(time + blade.phase) * 2;
+
             ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.quadraticCurveTo(x + 1, y - height / 2, x, y - height);
+            ctx.moveTo(blade.x, blade.y);
+            ctx.quadraticCurveTo(
+                blade.x + sway,
+                blade.y - blade.height / 2,
+                blade.x + sway,
+                blade.y - blade.height
+            );
             ctx.stroke();
         }
+
     }
 
     /**
