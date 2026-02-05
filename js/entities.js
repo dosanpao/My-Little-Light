@@ -249,7 +249,7 @@ class Guide {
     }
 
     /**
-     * Draw the guide character (Totoro-inspired)
+     * Draw the guide character (Gudetama - lazy egg sitting down)
      */
     draw(ctx, holdingHeart = false) {
         const drawY = this.y + this.bobOffset;
@@ -257,169 +257,129 @@ class Guide {
         // Glow effect
         Utils.drawGlow(ctx, this.x, drawY, this.size * 1.5, CONFIG.guide.glowColor);
 
-        // Shadow
+        // Shadow (wider for sitting pose)
         ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
         ctx.beginPath();
-        ctx.ellipse(this.x, this.y + this.size, this.size * 0.7, this.size / 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x, this.y + this.size * 0.7, this.size * 0.9, this.size / 5, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Body (round, Totoro-style)
-        ctx.fillStyle = '#c9b896'; // Warm grey-beige
+        // Egg white puddle (clear-ish white where Gudetama is sitting)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // Semi-transparent white
         ctx.beginPath();
-        ctx.ellipse(this.x, drawY, this.size * 0.6, this.size * 0.75, 0, 0, Math.PI * 2);
+        // Irregular puddle shape
+        ctx.ellipse(this.x, drawY + this.size * 0.5, this.size * 0.8, this.size * 0.4, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Belly
-        ctx.fillStyle = '#e8dcc8'; // Lighter belly
+        // Egg white shine/highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.beginPath();
-        ctx.ellipse(this.x, drawY + this.size * 0.2, this.size * 0.4, this.size * 0.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(this.x - this.size * 0.2, drawY + this.size * 0.45, this.size * 0.25, this.size * 0.15, -0.3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Belly pattern (V-shaped markings)
-        ctx.strokeStyle = '#a89878';
+        // Egg white subtle edge (slightly darker outline)
+        ctx.strokeStyle = 'rgba(230, 230, 230, 0.5)';
         ctx.lineWidth = 2;
-        
-        // Left V
         ctx.beginPath();
-        ctx.moveTo(this.x - this.size * 0.2, drawY);
-        ctx.lineTo(this.x - this.size * 0.15, drawY + this.size * 0.3);
-        ctx.lineTo(this.x - this.size * 0.05, drawY + this.size * 0.15);
+        ctx.ellipse(this.x, drawY + this.size * 0.5, this.size * 0.8, this.size * 0.4, 0, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Right V
+        // Main egg body (oval, sitting down - wider at bottom)
+        ctx.fillStyle = '#fabf1b'; // Gudetama yellow
         ctx.beginPath();
-        ctx.moveTo(this.x + this.size * 0.2, drawY);
-        ctx.lineTo(this.x + this.size * 0.15, drawY + this.size * 0.3);
-        ctx.lineTo(this.x + this.size * 0.05, drawY + this.size * 0.15);
+        ctx.ellipse(this.x, drawY, this.size * 0.55, this.size * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Egg yolk showing on top (the iconic Gudetama look)
+        ctx.fillStyle = '#f5a800'; // Darker yolk yellow
+        ctx.beginPath();
+        ctx.ellipse(this.x, drawY - this.size * 0.2, this.size * 0.4, this.size * 0.35, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Yolk highlight
+        ctx.fillStyle = '#fcd44d';
+        ctx.beginPath();
+        ctx.ellipse(this.x - this.size * 0.1, drawY - this.size * 0.25, this.size * 0.15, this.size * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Butt/bottom part (sitting, so a bit flattened)
+        ctx.fillStyle = '#fcd364';
+        ctx.beginPath();
+        ctx.ellipse(this.x, drawY + this.size * 0.45, this.size * 0.5, this.size * 0.25, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes (classic lazy Gudetama eyes - downward slanted lines)
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        
+        // Left eye (outer edge lower, inner edge higher) - less steep slope
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.size * 0.19, drawY - this.size * 0.07);  // outer (lower)
+        ctx.lineTo(this.x - this.size * 0.12, drawY - this.size * 0.09);   // inner (higher)
         ctx.stroke();
 
-        // Ears (pointy, triangular)
-        ctx.fillStyle = '#c9b896';
-        
-        // Left ear
+        // Right eye (inner edge higher, outer edge lower) - less steep slope
         ctx.beginPath();
-        ctx.moveTo(this.x - this.size * 0.5, drawY - this.size * 0.4);
-        ctx.lineTo(this.x - this.size * 0.3, drawY - this.size * 0.75);
-        ctx.lineTo(this.x - this.size * 0.2, drawY - this.size * 0.5);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(this.x + this.size * 0.12, drawY - this.size * 0.09);   // inner (higher)
+        ctx.lineTo(this.x + this.size * 0.19, drawY - this.size * 0.07);  // outer (lower)
+        ctx.stroke();
 
-        // Right ear
-        ctx.beginPath();
-        ctx.moveTo(this.x + this.size * 0.5, drawY - this.size * 0.4);
-        ctx.lineTo(this.x + this.size * 0.3, drawY - this.size * 0.75);
-        ctx.lineTo(this.x + this.size * 0.2, drawY - this.size * 0.5);
-        ctx.closePath();
-        ctx.fill();
-
-        // Ear inner (darker)
-        ctx.fillStyle = '#a89878';
-        
-        // Left ear inner
-        ctx.beginPath();
-        ctx.moveTo(this.x - this.size * 0.4, drawY - this.size * 0.45);
-        ctx.lineTo(this.x - this.size * 0.3, drawY - this.size * 0.65);
-        ctx.lineTo(this.x - this.size * 0.25, drawY - this.size * 0.5);
-        ctx.closePath();
-        ctx.fill();
-
-        // Right ear inner
-        ctx.beginPath();
-        ctx.moveTo(this.x + this.size * 0.4, drawY - this.size * 0.45);
-        ctx.lineTo(this.x + this.size * 0.3, drawY - this.size * 0.65);
-        ctx.lineTo(this.x + this.size * 0.25, drawY - this.size * 0.5);
-        ctx.closePath();
-        ctx.fill();
-
-        // Eyes (large, round)
+        // Mouth (lazy/unimpressed - narrow semi-circle with white inside, opening upward)
+        // First draw the white inside of the mouth (semi-circle fill opening upward)
         ctx.fillStyle = '#ffffff';
-        
-        // Left eye white
         ctx.beginPath();
-        ctx.arc(this.x - this.size * 0.2, drawY - this.size * 0.2, this.size * 0.15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Right eye white
-        ctx.beginPath();
-        ctx.arc(this.x + this.size * 0.2, drawY - this.size * 0.2, this.size * 0.15, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Pupils (large, dark)
-        ctx.fillStyle = '#2d4a3e';
-        
-        // Left pupil
-        ctx.beginPath();
-        ctx.arc(this.x - this.size * 0.2, drawY - this.size * 0.2, this.size * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Right pupil
-        ctx.beginPath();
-        ctx.arc(this.x + this.size * 0.2, drawY - this.size * 0.2, this.size * 0.1, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Eye shine
-        ctx.fillStyle = '#ffffff';
-        
-        // Left eye shine
-        ctx.beginPath();
-        ctx.arc(this.x - this.size * 0.17, drawY - this.size * 0.25, this.size * 0.04, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Right eye shine
-        ctx.beginPath();
-        ctx.arc(this.x + this.size * 0.23, drawY - this.size * 0.25, this.size * 0.04, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Nose (small triangle)
-        ctx.fillStyle = '#2d4a3e';
-        ctx.beginPath();
-        ctx.moveTo(this.x, drawY - this.size * 0.05);
-        ctx.lineTo(this.x - this.size * 0.05, drawY + this.size * 0.05);
-        ctx.lineTo(this.x + this.size * 0.05, drawY + this.size * 0.05);
+        ctx.ellipse(this.x, drawY + this.size * 0.11, this.size * 0.13, this.size * 0.05, 0, Math.PI, Math.PI * 2, false); // Narrow ellipse semi-circle opening upward
         ctx.closePath();
         ctx.fill();
-
-        // Whiskers
-        ctx.strokeStyle = '#2d4a3e';
-        ctx.lineWidth = 1.5;
         
-        // Left whiskers
-        for (let i = 0; i < 3; i++) {
-            const yOffset = (i - 1) * this.size * 0.08;
-            ctx.beginPath();
-            ctx.moveTo(this.x - this.size * 0.35, drawY + yOffset);
-            ctx.lineTo(this.x - this.size * 0.65, drawY + yOffset - this.size * 0.05);
-            ctx.stroke();
-        }
-
-        // Right whiskers
-        for (let i = 0; i < 3; i++) {
-            const yOffset = (i - 1) * this.size * 0.08;
-            ctx.beginPath();
-            ctx.moveTo(this.x + this.size * 0.35, drawY + yOffset);
-            ctx.lineTo(this.x + this.size * 0.65, drawY + yOffset - this.size * 0.05);
-            ctx.stroke();
-        }
-
-        // Arms (small, rounded)
-        ctx.fillStyle = '#c9b896';
+        // Draw mouth outline (semi-circle opening upward)
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 1.5;  // Thin border
+        ctx.lineCap = 'round';
         
-        // Left arm
+        // Semi-circle outline (opening upward)
         ctx.beginPath();
-        ctx.ellipse(this.x - this.size * 0.55, drawY + this.size * 0.1, this.size * 0.15, this.size * 0.25, -0.3, 0, Math.PI * 2);
+        ctx.ellipse(this.x, drawY + this.size * 0.11, this.size * 0.13, this.size * 0.05, 0, Math.PI, Math.PI * 2, false);
+        ctx.stroke();
+        
+        // Bottom line (closes the semi-circle)
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.size * 0.13, drawY + this.size * 0.11);
+        ctx.lineTo(this.x + this.size * 0.13, drawY + this.size * 0.11);
+        ctx.stroke();
+
+        // Tiny arms (just little nubs on the side, relaxed/lazy pose)
+        ctx.fillStyle = '#fabf1b';
+        
+        // Left arm (tiny, droopy)
+        ctx.beginPath();
+        ctx.ellipse(this.x - this.size * 0.48, drawY + this.size * 0.15, this.size * 0.12, this.size * 0.18, -0.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Right arm
+        // Right arm (tiny, droopy)
         ctx.beginPath();
-        ctx.ellipse(this.x + this.size * 0.55, drawY + this.size * 0.1, this.size * 0.15, this.size * 0.25, 0.3, 0, Math.PI * 2);
+        ctx.ellipse(this.x + this.size * 0.48, drawY + this.size * 0.15, this.size * 0.12, this.size * 0.18, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tiny legs (just visible at bottom, sitting)
+        ctx.fillStyle = '#fabf1b';
+        
+        // Left leg
+        ctx.beginPath();
+        ctx.ellipse(this.x - this.size * 0.25, drawY + this.size * 0.55, this.size * 0.1, this.size * 0.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right leg
+        ctx.beginPath();
+        ctx.ellipse(this.x + this.size * 0.25, drawY + this.size * 0.55, this.size * 0.1, this.size * 0.15, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // If holding heart (valentine screen)
         if (holdingHeart) {
-            this.drawHeart(ctx, this.x, drawY - this.size * 0.8);
+            this.drawHeart(ctx, this.x, drawY - this.size * 0.9);
         }
 
-        // Magical sparkles around (softer than before)
+        // Soft sparkles around (very subtle for lazy Gudetama)
         const sparkleTime = this.time * 1.5;
         for (let i = 0; i < 5; i++) {
             const angle = (sparkleTime + i * (Math.PI * 2 / 5));
@@ -427,7 +387,7 @@ class Guide {
             const sparkleY = drawY + Math.sin(angle) * (this.size * 0.9);
             const sparkleAlpha = (Math.sin(sparkleTime * 2 + i) * 0.3 + 0.5);
             
-            ctx.fillStyle = `rgba(255, 215, 155, ${sparkleAlpha})`;
+            ctx.fillStyle = `rgba(255, 215, 155, ${sparkleAlpha * 0.6})`;
             ctx.beginPath();
             ctx.arc(sparkleX, sparkleY, 2, 0, Math.PI * 2);
             ctx.fill();
