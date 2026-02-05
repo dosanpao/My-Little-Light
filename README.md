@@ -287,7 +287,6 @@ draw(ctx) {
 - Ensure images are in the correct format (PNG, JPG)
 
 ## 📄 License
-
 Feel free to customize and use this game for personal projects!
 
 ---

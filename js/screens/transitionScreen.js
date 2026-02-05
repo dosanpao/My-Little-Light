@@ -1,6 +1,6 @@
 /**
  * TRANSITION SCREEN
- * Emotional transition between completing all parts and valentine reveal
+ * Brief screen between level 3 and valentine reveal
  */
 
 class TransitionScreen {
@@ -8,8 +8,7 @@ class TransitionScreen {
         this.game = game;
         this.guide = new Guide(CONFIG.canvas.width / 2, CONFIG.canvas.height / 2);
         this.timer = 0;
-        this.phase = 0; // 0 = first message, 1 = second message, 2 = fade to valentine
-        this.phaseTimings = [120, 240, 300]; // Frames for each phase
+        this.duration = 180; // 3 seconds at 60fps
     }
 
     /**
@@ -19,22 +18,6 @@ class TransitionScreen {
         Utils.hideAllScreens();
         Utils.showUI('transitionUI');
         this.timer = 0;
-        this.phase = 0;
-        this.updateMessage();
-    }
-
-    /**
-     * Update transition text based on phase
-     */
-    updateMessage() {
-        const transitionText = document.querySelector('.transition-text');
-        if (transitionText) {
-            if (this.phase === 0) {
-                transitionText.textContent = CONFIG.dialogue.transition;
-            } else if (this.phase === 1) {
-                transitionText.textContent = CONFIG.dialogue.transitionContinued;
-            }
-        }
     }
 
     /**
@@ -44,17 +27,8 @@ class TransitionScreen {
         this.guide.update();
         this.timer++;
         
-        // Progress through phases
-        if (this.timer >= this.phaseTimings[this.phase] && this.phase < 2) {
-            this.phase++;
-            this.timer = 0;
-            if (this.phase < 2) {
-                this.updateMessage();
-            }
-        }
-        
-        // After all phases, go to valentine screen
-        if (this.phase === 2 && this.timer >= this.phaseTimings[2]) {
+        // After duration, go to valentine screen
+        if (this.timer >= this.duration) {
             this.game.changeScreen('valentine');
         }
     }
