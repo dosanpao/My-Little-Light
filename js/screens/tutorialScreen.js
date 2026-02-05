@@ -6,7 +6,7 @@
 class TutorialScreen {
     constructor(game) {
         this.game = game;
-        this.guide = new Guide(CONFIG.canvas.width / 2, CONFIG.canvas.height / 2);
+        this.guide = new Guide(CONFIG.canvas.width / 2, CONFIG.canvas.height - 200); // Bottom center
         this.currentDialogueIndex = 0;
         
         // Setup continue button

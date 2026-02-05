@@ -6,8 +6,27 @@
 class TitleScreen {
     constructor(game) {
         this.game = game;
-        this.guide = new Guide(CONFIG.canvas.width / 2, CONFIG.canvas.height / 2 - 50);
+        this.guide = new Guide(150, CONFIG.canvas.height - 120); // Moved to bottom left
         this.buttonSetup = false;
+        this.fireflies = this.initFireflies();
+    }
+    
+    /**
+     * Initialize fireflies
+     */
+    initFireflies() {
+        const fireflies = [];
+        for (let i = 0; i < 15; i++) {
+            fireflies.push({
+                x: Math.random() * CONFIG.canvas.width,
+                y: Math.random() * CONFIG.canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                brightness: Math.random(),
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+        return fireflies;
     }
 
     /**
@@ -35,6 +54,25 @@ class TitleScreen {
      */
     update() {
         this.guide.update();
+        
+        // Update fireflies
+        this.fireflies.forEach(firefly => {
+            firefly.x += firefly.vx;
+            firefly.y += firefly.vy;
+            firefly.phase += 0.05;
+            
+            // Wrap around screen
+            if (firefly.x < 0) firefly.x = CONFIG.canvas.width;
+            if (firefly.x > CONFIG.canvas.width) firefly.x = 0;
+            if (firefly.y < 0) firefly.y = CONFIG.canvas.height;
+            if (firefly.y > CONFIG.canvas.height) firefly.y = 0;
+            
+            // Random direction changes
+            if (Math.random() < 0.02) {
+                firefly.vx = (Math.random() - 0.5) * 0.5;
+                firefly.vy = (Math.random() - 0.5) * 0.5;
+            }
+        });
     }
 
     /**
@@ -47,6 +85,9 @@ class TitleScreen {
 
         // Draw decorative forest elements
         this.drawForestBackground(ctx);
+
+        // Draw fireflies
+        this.drawFireflies(ctx);
 
         // Draw guide character
         this.guide.draw(ctx);
@@ -67,7 +108,18 @@ class TitleScreen {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
 
-        // Distant hills
+        // Distant hills (back layer)
+        ctx.fillStyle = 'rgba(168, 198, 159, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(0, CONFIG.canvas.height * 0.55);
+        ctx.quadraticCurveTo(300, CONFIG.canvas.height * 0.45, 600, CONFIG.canvas.height * 0.55);
+        ctx.quadraticCurveTo(700, CONFIG.canvas.height * 0.6, CONFIG.canvas.width, CONFIG.canvas.height * 0.5);
+        ctx.lineTo(CONFIG.canvas.width, CONFIG.canvas.height);
+        ctx.lineTo(0, CONFIG.canvas.height);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Mid-distance hills (front layer)
         ctx.fillStyle = 'rgba(168, 198, 159, 0.3)';
         ctx.beginPath();
         ctx.moveTo(0, CONFIG.canvas.height * 0.5);
@@ -81,7 +133,7 @@ class TitleScreen {
         // Trees with proper tree shapes
         const trees = [
             { x: 100, y: 200, size: 60, layers: 3 },
-            { x: 650, y: 150, size: 80, layers: 4 },
+            { x: 670, y: 250, size: 80, layers: 4 },
             { x: 200, y: 450, size: 50, layers: 3 },
             { x: 700, y: 500, size: 70, layers: 3 }
         ];
@@ -167,6 +219,36 @@ class TitleScreen {
             ctx.fillStyle = '#ffd89b';
             ctx.beginPath();
             ctx.arc(flower.x, flower.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    /**
+     * Draw fireflies flying around
+     */
+    drawFireflies(ctx) {
+        this.fireflies.forEach(firefly => {
+            const glow = Math.sin(firefly.phase) * 0.5 + 0.5;
+            const alpha = firefly.brightness * glow;
+            
+            // Outer glow
+            const gradient = ctx.createRadialGradient(
+                firefly.x, firefly.y, 0,
+                firefly.x, firefly.y, 15
+            );
+            gradient.addColorStop(0, `rgba(255, 255, 150, ${alpha * 0.8})`);
+            gradient.addColorStop(0.5, `rgba(255, 255, 100, ${alpha * 0.4})`);
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(firefly.x, firefly.y, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Core light
+            ctx.fillStyle = `rgba(255, 255, 200, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(firefly.x, firefly.y, 3, 0, Math.PI * 2);
             ctx.fill();
         });
     }

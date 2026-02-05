@@ -15,6 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     game.start();
     
     // Log to console
-    console.log('🌲 Whispers of the Forest - Game Started');
+    console.log('✨ My Little Light - Game Started');
     console.log('💖 A cozy adventure awaits...');
 });
