@@ -105,11 +105,14 @@ canvas {
 }
 
 .dialogue-floating {
-    position: absolute;
-    top: 30px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: absolute !important;
+    top: 30px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     max-width: 600px;
+    /* Override any conflicting positioning from parent */
+    justify-content: unset;
+    align-items: unset;
 }
 
 .dialogue-text {
