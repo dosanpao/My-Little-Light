@@ -39,10 +39,11 @@
 
         <!-- Tutorial Screen UI -->
         <div id="tutorialUI" class="screen-ui hidden">
-            <div class="dialogue-box">
-                <p id="tutorialText" class="dialogue-text"></p>
-                <button id="tutorialContinueBtn" class="btn btn-primary">Continue</button>
+            <div id="tutorialDialogue" class="chat-bubble guide-bottom" style="bottom: 240px; left: 50%; transform: translateX(-50%);">
+                <p id="tutorialText" class="chat-text"></p>
+                <p class="click-hint">Click to continue →</p>
             </div>
+            <button id="tutorialContinueBtn" class="btn btn-primary" style="position: absolute; bottom: 30px;">Continue</button>
         </div>
 
         <!-- Color Selection Screen UI -->
@@ -63,15 +64,16 @@
                 <h2 id="levelName" class="level-name"></h2>
                 <p id="objectiveText" class="objective-text"></p>
             </div>
-            <div id="levelDialogue" class="dialogue-box dialogue-floating hidden">
-                <p id="levelDialogueText" class="dialogue-text"></p>
+            <div id="levelDialogue" class="chat-bubble hidden">
+                <p id="levelDialogueText" class="chat-text"></p>
+                <p class="click-hint">Click to dismiss</p>
             </div>
         </div>
 
         <!-- Level Complete UI -->
         <div id="levelCompleteUI" class="screen-ui hidden">
             <div class="dialogue-box">
-                <h2 class="completion-title">Level Complete! ✨¨</h2>
+                <h2 class="completion-title">Level Complete! ✨</h2>
                 <p id="completionMessage" class="dialogue-text"></p>
                 <button id="nextLevelBtn" class="btn btn-primary">Continue</button>
             </div>

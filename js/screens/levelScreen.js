@@ -62,7 +62,6 @@ class LevelScreen {
             
             // Add new click handler
             newDialogueBox.addEventListener('click', (e) => {
-                console.log('Dialogue clicked!'); // Debug log
                 e.preventDefault();
                 e.stopPropagation();
                 this.dismissDialogue();
@@ -72,7 +71,6 @@ class LevelScreen {
             const textElement = newDialogueBox.querySelector('#levelDialogueText');
             if (textElement) {
                 textElement.addEventListener('click', (e) => {
-                    console.log('Text clicked!'); // Debug log
                     e.preventDefault();
                     e.stopPropagation();
                     this.dismissDialogue();
@@ -125,13 +123,69 @@ class LevelScreen {
             document.getElementById('levelDialogueText').textContent = dialogue;
             dialogueBox.classList.remove('hidden');
             dialogueBox.style.opacity = this.dialogueFadeOpacity;
-            dialogueBox.style.display = 'block'; // Ensure it's visible
-            dialogueBox.style.pointerEvents = 'auto'; // Ensure clicks work
+            dialogueBox.style.display = 'block';
+            dialogueBox.style.pointerEvents = 'auto';
+            
+            // Position dialogue bubble near the guide
+            this.positionDialogueNearGuide();
         } else {
             dialogueBox.classList.add('hidden');
             dialogueBox.style.opacity = 1; // Reset for next time
             dialogueBox.style.display = 'none';
         }
+    }
+
+    /**
+     * Position the dialogue bubble near the guide character
+     */
+    positionDialogueNearGuide() {
+        const dialogueBox = document.getElementById('levelDialogue');
+        if (!dialogueBox || !this.guide) return;
+        
+        const guideX = this.guide.x;
+        const guideY = this.guide.y;
+        
+        // Determine which side of the guide to place the bubble
+        // If guide is on the right side, put bubble on left
+        // If guide is on the left side, put bubble on right
+        // If guide is in the middle, put it above or to the side
+        
+        let bubbleClass = '';
+        let left, top;
+        
+        if (guideX > CONFIG.canvas.width * 0.6) {
+            // Guide on right - bubble on left
+            bubbleClass = 'guide-right';
+            left = guideX - 380; // Bubble width + spacing
+            top = guideY - 30;
+        } else if (guideX < CONFIG.canvas.width * 0.4) {
+            // Guide on left - bubble on right
+            bubbleClass = 'guide-left';
+            left = guideX + 80; // Guide size + spacing
+            top = guideY - 30;
+        } else {
+            // Guide in middle - bubble above or to the right
+            if (guideY < CONFIG.canvas.height * 0.5) {
+                // Guide in upper half - put bubble to right
+                bubbleClass = 'guide-left';
+                left = guideX + 80;
+                top = guideY - 30;
+            } else {
+                // Guide in lower half - put bubble above
+                bubbleClass = 'guide-bottom';
+                left = guideX - 175; // Half bubble width
+                top = guideY - 150;
+            }
+        }
+        
+        // Remove old bubble class and add new one
+        dialogueBox.className = 'chat-bubble';
+        dialogueBox.classList.add(bubbleClass);
+        
+        // Set position
+        dialogueBox.style.left = left + 'px';
+        dialogueBox.style.top = top + 'px';
+        dialogueBox.style.transform = 'none';
     }
 
     /**
@@ -148,10 +202,7 @@ class LevelScreen {
      * Dismiss dialogue immediately (on click)
      */
     dismissDialogue() {
-        console.log('dismissDialogue called, showingDialogue:', this.showingDialogue); // Debug
-        
         if (!this.showingDialogue) {
-            console.log('Already dismissed, returning'); // Debug
             return; // Already dismissed
         }
         
@@ -161,7 +212,6 @@ class LevelScreen {
         // Immediately hide the dialogue box
         const dialogueBox = document.getElementById('levelDialogue');
         if (dialogueBox) {
-            console.log('Hiding dialogue box'); // Debug
             dialogueBox.classList.add('hidden');
             dialogueBox.style.opacity = 1; // Reset for next time
             dialogueBox.style.display = 'none'; // Force hide

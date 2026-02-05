@@ -32,6 +32,15 @@ class TutorialScreen {
         const dialogue = CONFIG.dialogue.tutorial[this.currentDialogueIndex];
         const personalizedDialogue = this.game.getPersonalizedDialogue(dialogue);
         document.getElementById('tutorialText').textContent = personalizedDialogue;
+        
+        // Position the chat bubble above the guide
+        const chatBubble = document.getElementById('tutorialDialogue');
+        if (chatBubble) {
+            // Guide is at bottom center, so position bubble above it
+            chatBubble.style.bottom = '240px'; // Above the guide
+            chatBubble.style.left = '50%';
+            chatBubble.style.transform = 'translateX(-50%)';
+        }
     }
 
     /**

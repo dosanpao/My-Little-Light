@@ -104,6 +104,97 @@ canvas {
     animation: fadeSlideIn 0.6s ease;
 }
 
+/* Chat Bubble - Guide Style */
+.chat-bubble {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.98);
+    border: 3px solid var(--gold);
+    border-radius: 20px;
+    padding: 1rem 1.5rem;
+    max-width: 350px;
+    box-shadow: 0 8px 25px rgba(255, 215, 155, 0.4);
+    animation: bubbleIn 0.4s ease;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chat-bubble:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(255, 215, 155, 0.5);
+}
+
+/* Chat bubble tail pointing to guide */
+.chat-bubble::before {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+/* Tail position for tutorial (guide at bottom center) */
+.chat-bubble.guide-bottom::before {
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 15px 12px 0 12px;
+    border-color: var(--gold) transparent transparent transparent;
+}
+
+.chat-bubble.guide-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 12px 10px 0 10px;
+    border-color: rgba(255, 255, 255, 0.98) transparent transparent transparent;
+}
+
+/* Tail position for level dialogue (guide at top right usually) */
+.chat-bubble.guide-right::before {
+    top: 20px;
+    right: -15px;
+    border-width: 12px 0 12px 15px;
+    border-color: transparent transparent transparent var(--gold);
+}
+
+.chat-bubble.guide-right::after {
+    content: '';
+    position: absolute;
+    top: 23px;
+    right: -11px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 10px 0 10px 12px;
+    border-color: transparent transparent transparent rgba(255, 255, 255, 0.98);
+}
+
+/* Tail position for level dialogue (guide at top left) */
+.chat-bubble.guide-left::before {
+    top: 20px;
+    left: -15px;
+    border-width: 12px 15px 12px 0;
+    border-color: transparent var(--gold) transparent transparent;
+}
+
+.chat-bubble.guide-left::after {
+    content: '';
+    position: absolute;
+    top: 23px;
+    left: -11px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 10px 12px 10px 0;
+    border-color: transparent rgba(255, 255, 255, 0.98) transparent transparent;
+}
+
 .dialogue-floating {
     position: absolute !important;
     top: 30px !important;
@@ -121,6 +212,26 @@ canvas {
     color: var(--forest-deep);
     margin-bottom: 1.5rem;
     font-weight: 500;
+}
+
+/* Chat bubble text - smaller and more compact */
+.chat-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--forest-deep);
+    margin: 0;
+    font-weight: 500;
+    text-align: left;
+}
+
+/* Click hint for chat bubbles */
+.chat-bubble .click-hint {
+    font-size: 0.75rem;
+    color: var(--forest-light);
+    margin-top: 0.5rem;
+    font-style: italic;
+    text-align: center;
+    opacity: 0.7;
 }
 
 /* Buttons */
@@ -386,6 +497,17 @@ canvas {
     }
 }
 
+@keyframes bubbleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 @keyframes heartbeat {
     0%, 100% {
         transform: scale(1);
@@ -445,6 +567,11 @@ canvas {
         padding: 2rem;
     }
     
+    .chat-bubble {
+        max-width: 280px;
+        padding: 0.8rem 1.2rem;
+    }
+    
     .color-options-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -461,6 +588,11 @@ canvas {
     
     .color-options-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .chat-bubble {
+        max-width: 240px;
+        font-size: 0.9rem;
     }
 }
 
