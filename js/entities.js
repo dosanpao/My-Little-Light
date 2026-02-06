@@ -550,13 +550,18 @@ class Collectible {
     /**
      * Start absorption animation toward player
      */
-    startAbsorption(playerX, playerY) {
+    startAbsorption(playerX, playerY, lightColor) {
         this.isBeingAbsorbed = true;
         this.absorptionProgress = 0;
         this.targetX = playerX;
         this.targetY = playerY;
         this.startX = this.x;
         this.startY = this.y;
+        
+        // Trigger the full-screen pulse effect
+        if (lightColor) {
+            Utils.triggerCollectionPulse(lightColor);
+        }
     }
 
     /**
@@ -674,8 +679,8 @@ class Collectible {
         );
 
         if (distance < this.size + player.size / 2) {
-            // Start absorption animation instead of immediately collecting
-            this.startAbsorption(player.x, player.y);
+            // Start absorption animation with player's light color for pulse effect
+            this.startAbsorption(player.x, player.y, player.lightColor);
         }
     }
 }

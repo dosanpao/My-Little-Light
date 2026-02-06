@@ -107,5 +107,39 @@ const Utils = {
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.fill();
+    },
+
+    /**
+     * Trigger full-screen pulse effect when collecting orb
+     * @param {object} lightColor - The player's light color object
+     */
+    triggerCollectionPulse(lightColor) {
+        const overlay = document.getElementById('pulseOverlay');
+        if (!overlay) return;
+
+        // Map light colors to pulse styles
+        const colorToPulseMap = {
+            'Warm White': 'pulse-warm',
+            'Soft Yellow': 'pulse-golden',
+            'Sky Blue': 'pulse-cool',
+            'Lavender': 'pulse-mystical',
+            'Peach': 'pulse-peachy',
+            'Mint Green': 'pulse-mint'
+        };
+
+        // Remove any existing pulse classes
+        overlay.className = 'pulse-overlay';
+        
+        // Add the appropriate pulse color class
+        const pulseClass = colorToPulseMap[lightColor.name] || 'pulse-warm';
+        overlay.classList.add(pulseClass);
+        
+        // Trigger the animation
+        //overlay.classList.add('active');
+        
+        // Remove the active class after animation completes (1.4s)
+        setTimeout(() => {
+            overlay.classList.remove('active');
+        }, 1400);
     }
 };
