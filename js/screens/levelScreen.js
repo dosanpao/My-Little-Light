@@ -141,6 +141,41 @@ class LevelScreen {
             }
         }
         
+        // NEW: Handle special levels (Level 7 & 8)
+        this.secondLight = null;
+        this.meetingPoint = null;
+        this.shadowEntities = [];
+        this.shieldRadius = 0;
+        this.currentWave = 0;
+        this.waveCooldown = 0;
+        this.lightsHaveMet = false;
+        this.meetingGlowIntensity = 0;
+        
+        if (levelData.isSpecialLevel === 'crossingLights') {
+            // Level 7: Create second light and meeting point
+            this.secondLight = new SecondLight(
+                levelData.secondLightStart.x,
+                levelData.secondLightStart.y,
+                CONFIG.lightColors[2] // Sky Blue
+            );
+            this.secondLight.setTarget(levelData.meetingPoint.x, levelData.meetingPoint.y);
+            this.meetingPoint = levelData.meetingPoint;
+        } else if (levelData.isSpecialLevel === 'heldAgainstDark') {
+            // Level 8: Create second light that follows player
+            this.secondLight = new SecondLight(
+                levelData.secondLightStart.x,
+                levelData.secondLightStart.y,
+                CONFIG.lightColors[3] // Lavender
+            );
+            this.shieldRadius = 80; // Base shield radius
+            this.shadowWaveCount = levelData.shadowWaveCount || 3;
+            this.shadowsPerWave = levelData.shadowsPerWave || 8;
+            this.currentWave = 0;
+            this.waveCooldown = 0;
+            this.darknessIntensity = 0; // For final climax
+            this.darknessTimer = undefined; // Will be initialized when needed
+        }
+        
         // Reset death state
         this.isDying = false;
         this.deathFadeProgress = 0;
@@ -156,7 +191,15 @@ class LevelScreen {
         const total = this.collectibles.length;
         
         document.getElementById('levelName').textContent = levelData.name;
-        document.getElementById('objectiveText').textContent = `Collect: ${collected}/${total}`;
+        
+        // Special levels have different objectives
+        if (levelData.isSpecialLevel === 'crossingLights') {
+            document.getElementById('objectiveText').textContent = 'Move to the center...';
+        } else if (levelData.isSpecialLevel === 'heldAgainstDark') {
+            document.getElementById('objectiveText').textContent = 'Stay together...';
+        } else {
+            document.getElementById('objectiveText').textContent = `Collect: ${collected}/${total}`;
+        }
         
         // Show level start dialogue
         const dialogueBox = document.getElementById('levelDialogue');
@@ -409,6 +452,187 @@ class LevelScreen {
                 this.checkLevelComplete();
             }
         });
+        
+        // NEW: Update special levels
+        const levelData = CONFIG.levels[this.currentLevelIndex];
+        
+        if (levelData.isSpecialLevel === 'crossingLights') {
+            this.updateCrossingLights();
+        } else if (levelData.isSpecialLevel === 'heldAgainstDark') {
+            this.updateHeldAgainstDark();
+        }
+    }
+    
+    /**
+     * Update logic for Level 7 - Crossing Lights
+     */
+    updateCrossingLights() {
+        if (!this.secondLight || !this.meetingPoint) return;
+        
+        // Check if player is moving
+        const playerIsMoving = this.player.keys.up || this.player.keys.down || 
+                              this.player.keys.left || this.player.keys.right;
+        
+        // Update second light (mirrors player movement)
+        this.secondLight.update(playerIsMoving);
+        
+        // Check if both lights have reached the center
+        const playerDist = Math.sqrt(
+            Math.pow(this.player.x - this.meetingPoint.x, 2) + 
+            Math.pow(this.player.y - this.meetingPoint.y, 2)
+        );
+        const secondDist = Math.sqrt(
+            Math.pow(this.secondLight.x - this.meetingPoint.x, 2) + 
+            Math.pow(this.secondLight.y - this.meetingPoint.y, 2)
+        );
+        
+        // Both within 15 pixels of center
+        if (playerDist < 15 && secondDist < 15 && !this.lightsHaveMet) {
+            this.lightsHaveMet = true;
+            this.meetingGlowIntensity = 0;
+            
+            // Wait a moment, then complete
+            setTimeout(() => {
+                if (this.lightsHaveMet && !this.levelComplete) {
+                    this.levelComplete = true;
+                    this.showLevelComplete();
+                }
+            }, 2000);
+        }
+        
+        // Increase glow when meeting
+        if (this.lightsHaveMet && this.meetingGlowIntensity < 1) {
+            this.meetingGlowIntensity += 0.02;
+        }
+    }
+    
+    /**
+     * Update logic for Level 8 - Held Against the Dark
+     */
+    updateHeldAgainstDark() {
+        if (!this.secondLight) return;
+        
+        // Second light follows player
+        const dx = this.player.x - this.secondLight.x;
+        const dy = this.player.y - this.secondLight.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        const targetDistance = 50; // Stay 50 pixels from player
+        
+        if (distance > targetDistance + 5) {
+            // Move toward player
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+            const moveSpeed = 2.5;
+            
+            this.secondLight.x += dirX * moveSpeed;
+            this.secondLight.y += dirY * moveSpeed;
+            this.secondLight.isMoving = true;
+        } else if (distance < targetDistance - 5) {
+            // Move away from player
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+            const moveSpeed = 1.5;
+            
+            this.secondLight.x -= dirX * moveSpeed;
+            this.secondLight.y -= dirY * moveSpeed;
+            this.secondLight.isMoving = true;
+        } else {
+            this.secondLight.isMoving = false;
+        }
+        
+        // Update time for animations
+        this.secondLight.time += 0.08;
+        this.secondLight.idleTime += 0.016;
+        
+        // Calculate shield strength based on distance
+        const maxDistance = 100;
+        const shieldStrength = Math.max(0, 1 - (distance - targetDistance) / maxDistance);
+        this.shieldRadius = 80 + shieldStrength * 40;
+        
+        // Spawn shadow waves
+        this.waveCooldown++;
+        if (this.currentWave < this.shadowWaveCount && this.waveCooldown > 180) {
+            this.spawnShadowWave();
+            this.currentWave++;
+            this.waveCooldown = 0;
+        }
+        
+        // Update shadow entities
+        const shieldCenterX = (this.player.x + this.secondLight.x) / 2;
+        const shieldCenterY = (this.player.y + this.secondLight.y) / 2;
+        
+        this.shadowEntities = this.shadowEntities.filter(shadow => {
+            // Update target to shield center
+            shadow.targetX = shieldCenterX;
+            shadow.targetY = shieldCenterY;
+            
+            const dissolved = shadow.update();
+            
+            // Check collision with shield
+            if (!shadow.dissolving) {
+                const dx = shadow.x - shieldCenterX;
+                const dy = shadow.y - shieldCenterY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < this.shieldRadius) {
+                    shadow.dissolve();
+                }
+            }
+            
+            return !dissolved; // Keep if not fully dissolved
+        });
+        
+        // Final climax: all waves spawned, wait for shadows to clear
+        if (this.currentWave >= this.shadowWaveCount && this.shadowEntities.length === 0 && !this.levelComplete) {
+            // Initialize darkness timer if not set
+            if (this.darknessTimer === undefined) {
+                this.darknessTimer = 0;
+            }
+            
+            this.darknessTimer++;
+            
+            // Phase 1: Increase darkness (0-100 frames = ~1.6 seconds)
+            if (this.darknessTimer < 100) {
+                this.darknessIntensity = this.darknessTimer / 100;
+            }
+            // Phase 2: Hold at peak (100-160 frames = 1 second hold)
+            else if (this.darknessTimer < 160) {
+                this.darknessIntensity = 1;
+            }
+            // Phase 3: Fade out (160-260 frames = ~1.6 seconds)
+            else if (this.darknessTimer < 260) {
+                this.darknessIntensity = 1 - ((this.darknessTimer - 160) / 100);
+            }
+            // Phase 4: Complete
+            else {
+                this.darknessIntensity = 0;
+                this.levelComplete = true;
+                this.showLevelComplete();
+            }
+        }
+    }
+    
+    /**
+     * Spawn a wave of shadow entities
+     */
+    spawnShadowWave() {
+        const shieldCenterX = (this.player.x + this.secondLight.x) / 2;
+        const shieldCenterY = (this.player.y + this.secondLight.y) / 2;
+        
+        for (let i = 0; i < this.shadowsPerWave; i++) {
+            const angle = (i / this.shadowsPerWave) * Math.PI * 2;
+            const spawnDistance = 350; // Spawn outside screen
+            const spawnX = shieldCenterX + Math.cos(angle) * spawnDistance;
+            const spawnY = shieldCenterY + Math.sin(angle) * spawnDistance;
+            
+            this.shadowEntities.push(new ShadowEntity(
+                spawnX,
+                spawnY,
+                shieldCenterX,
+                shieldCenterY
+            ));
+        }
     }
 
     /**
@@ -491,12 +715,26 @@ class LevelScreen {
         // Draw collectibles
         this.collectibles.forEach(collectible => collectible.draw(ctx));
         
+        // NEW: Draw special level elements (before guide and player)
+        const levelData = CONFIG.levels[this.currentLevelIndex];
+        
+        if (levelData.isSpecialLevel === 'crossingLights') {
+            this.drawCrossingLights(ctx);
+        } else if (levelData.isSpecialLevel === 'heldAgainstDark') {
+            this.drawHeldAgainstDark(ctx);
+        }
+        
         // Draw guide
         this.guide.draw(ctx);
         
         // NEW: Draw Black Light (before player so player is on top)
         if (this.blackLight) {
             this.blackLight.draw(ctx);
+        }
+        
+        // Draw second light (if exists)
+        if (this.secondLight) {
+            this.secondLight.draw(ctx);
         }
         
         // Draw player
@@ -513,6 +751,119 @@ class LevelScreen {
             ctx.fillStyle = `rgba(0, 0, 0, ${this.deathFadeProgress})`;
             ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
         }
+    }
+    
+    /**
+     * Draw Level 7 - Crossing Lights
+     */
+    drawCrossingLights(ctx) {
+        if (!this.meetingPoint) return;
+        
+        // Draw meeting point with growing glow
+        const baseGlow = 40;
+        const glowSize = baseGlow + this.meetingGlowIntensity * 80;
+        
+        for (let i = 3; i >= 0; i--) {
+            const radius = glowSize + i * 20;
+            const alpha = (0.15 - i * 0.03) * (1 + this.meetingGlowIntensity);
+            
+            const gradient = ctx.createRadialGradient(
+                this.meetingPoint.x, this.meetingPoint.y, 0,
+                this.meetingPoint.x, this.meetingPoint.y, radius
+            );
+            
+            gradient.addColorStop(0, `rgba(255, 245, 200, ${alpha})`);
+            gradient.addColorStop(0.5, `rgba(255, 215, 155, ${alpha * 0.5})`);
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(this.meetingPoint.x, this.meetingPoint.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Draw center point
+        const pulse = 1 + Math.sin(Date.now() / 300) * 0.2;
+        ctx.fillStyle = `rgba(255, 235, 180, ${0.6 + this.meetingGlowIntensity * 0.4})`;
+        ctx.beginPath();
+        ctx.arc(this.meetingPoint.x, this.meetingPoint.y, 8 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Sparkles when meeting
+        if (this.meetingGlowIntensity > 0) {
+            const time = Date.now() / 1000;
+            for (let i = 0; i < 12; i++) {
+                const angle = (time + i / 12 * Math.PI * 2);
+                const distance = 60 + Math.sin(time * 2 + i) * 20;
+                const x = this.meetingPoint.x + Math.cos(angle) * distance;
+                const y = this.meetingPoint.y + Math.sin(angle) * distance;
+                const alpha = (Math.sin(time * 3 + i) * 0.5 + 0.5) * this.meetingGlowIntensity;
+                
+                ctx.fillStyle = `rgba(255, 215, 155, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Darken background as lights get closer
+        if (this.lightsHaveMet) {
+            const darkness = this.meetingGlowIntensity * 0.3;
+            ctx.fillStyle = `rgba(45, 74, 62, ${darkness})`;
+            ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        }
+    }
+    
+    /**
+     * Draw Level 8 - Held Against the Dark
+     */
+    drawHeldAgainstDark(ctx) {
+        if (!this.secondLight) return;
+        
+        // Draw darkness overlay based on intensity
+        let darknessAlpha = 0;
+        if (this.darknessIntensity > 0) {
+            darknessAlpha = this.darknessIntensity * 0.7;
+        }
+        
+        if (darknessAlpha > 0 || this.shadowEntities.length > 0) {
+            ctx.fillStyle = `rgba(10, 5, 15, ${darknessAlpha})`;
+            ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        }
+        
+        // Draw shadow entities
+        this.shadowEntities.forEach(shadow => shadow.draw(ctx));
+        
+        // Draw protective shield
+        const shieldCenterX = (this.player.x + this.secondLight.x) / 2;
+        const shieldCenterY = (this.player.y + this.secondLight.y) / 2;
+        
+        // Shield glow layers
+        for (let i = 2; i >= 0; i--) {
+            const radius = this.shieldRadius + i * 15;
+            const alpha = 0.15 - i * 0.04;
+            
+            const gradient = ctx.createRadialGradient(
+                shieldCenterX, shieldCenterY, 0,
+                shieldCenterX, shieldCenterY, radius
+            );
+            
+            gradient.addColorStop(0, `rgba(200, 220, 255, ${alpha})`);
+            gradient.addColorStop(0.6, `rgba(150, 180, 255, ${alpha * 0.5})`);
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(shieldCenterX, shieldCenterY, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Shield edge (subtle)
+        ctx.strokeStyle = `rgba(180, 200, 255, 0.3)`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(shieldCenterX, shieldCenterY, this.shieldRadius, 0, Math.PI * 2);
+        ctx.stroke();
     }
 
     /**
@@ -537,6 +888,12 @@ class LevelScreen {
                 break;
             case 5:
                 this.drawLastLightClearingBackground(ctx);
+                break;
+            case 6:
+                this.drawCrossingLightsBackground(ctx);
+                break;
+            case 7:
+                this.drawHeldAgainstDarkBackground(ctx);
                 break;
             default:
                 this.drawAwakeningGroveBackground(ctx);
@@ -1104,5 +1461,73 @@ class LevelScreen {
         // Ground
         ctx.fillStyle = '#2d2838';
         ctx.fillRect(0, CONFIG.canvas.height - 80, CONFIG.canvas.width, 80);
+    }
+    
+    /**
+     * Level 7: Crossing Lights - Calm, symbolic, warm atmosphere
+     */
+    drawCrossingLightsBackground(ctx) {
+        // Gentle warm gradient
+        const gradient = ctx.createRadialGradient(
+            CONFIG.canvas.width / 2, 
+            CONFIG.canvas.height / 2, 
+            0,
+            CONFIG.canvas.width / 2, 
+            CONFIG.canvas.height / 2, 
+            CONFIG.canvas.width / 1.5
+        );
+        gradient.addColorStop(0, '#fff8f0');
+        gradient.addColorStop(0.5, '#fef5eb');
+        gradient.addColorStop(1, '#f5ede0');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        
+        // Soft ambient circles (like gentle bokeh)
+        const time = Date.now() / 3000;
+        ctx.fillStyle = 'rgba(255, 235, 200, 0.15)';
+        for (let i = 0; i < 8; i++) {
+            const x = (Math.sin(time + i) * 0.3 + 0.5) * CONFIG.canvas.width;
+            const y = (Math.cos(time * 0.7 + i) * 0.3 + 0.5) * CONFIG.canvas.height;
+            const size = 40 + Math.sin(time * 2 + i) * 15;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Ground
+        ctx.fillStyle = 'rgba(168, 198, 159, 0.2)';
+        ctx.fillRect(0, CONFIG.canvas.height - 60, CONFIG.canvas.width, 60);
+    }
+    
+    /**
+     * Level 8: Held Against the Dark - Protective, intimate atmosphere
+     */
+    drawHeldAgainstDarkBackground(ctx) {
+        // Base gradient - slightly darker
+        const gradient = ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
+        gradient.addColorStop(0, '#e0d8f0');
+        gradient.addColorStop(0.5, '#f0e8f5');
+        gradient.addColorStop(1, '#e8e0ed');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        
+        // Subtle vignette
+        const vignette = ctx.createRadialGradient(
+            CONFIG.canvas.width / 2,
+            CONFIG.canvas.height / 2,
+            CONFIG.canvas.width / 4,
+            CONFIG.canvas.width / 2,
+            CONFIG.canvas.height / 2,
+            CONFIG.canvas.width / 1.2
+        );
+        vignette.addColorStop(0, 'transparent');
+        vignette.addColorStop(1, 'rgba(40, 30, 50, 0.15)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+        
+        // Ground
+        ctx.fillStyle = 'rgba(150, 140, 160, 0.2)';
+        ctx.fillRect(0, CONFIG.canvas.height - 60, CONFIG.canvas.width, 60);
     }
 }

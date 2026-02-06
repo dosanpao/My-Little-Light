@@ -108,6 +108,16 @@ const CONFIG = {
         level6Start: "This is the final test{name}. Don't let the darkness claim you.",
         level6Complete: "You've proven your light cannot be extinguished{name}. The forest is safe.",
         
+        // NEW: Crossing Lights (Level 7)
+        level7Start: "Sometimes{name}... light finds light.",
+        level7Guide1: "Go to the center. Don't rush.",
+        level7Complete: "You don't shine less together{name}. You shine more.",
+        
+        // NEW: Held Against the Dark (Level 8)
+        level8Start: "Together{name}, nothing can touch you.",
+        level8Warning: "Stay close.",
+        level8Complete: "Some things don't disappear{name}. But love makes them lighter.",
+        
         transition: "One last thing{name}...",
         
         valentine: "Will you be my Valentine{name}?"
@@ -230,6 +240,31 @@ const CONFIG = {
                 { x: 300, y: 180, width: 200, height: 20 },
                 { x: 300, y: 420, width: 200, height: 20 }
             ]
+        },
+        
+        // LEVEL 7 - Crossing Lights (Two lights meeting)
+        {
+            name: "Crossing Lights",
+            playerStart: { x: 100, y: 300 },
+            guidePosition: { x: 400, y: 500 },
+            secondLightStart: { x: 700, y: 300 }, // AI-controlled second light
+            meetingPoint: { x: 400, y: 300 }, // Center point where they meet
+            collectibles: [], // No collectibles
+            obstacles: [], // No obstacles
+            isSpecialLevel: 'crossingLights' // Flag for special behavior
+        },
+        
+        // LEVEL 8 - Held Against the Dark (Together against darkness)
+        {
+            name: "Held Against the Dark",
+            playerStart: { x: 350, y: 300 },
+            guidePosition: { x: 400, y: 100 },
+            secondLightStart: { x: 450, y: 300 }, // Starts close to player
+            collectibles: [], // No collectibles
+            obstacles: [], // No obstacles
+            isSpecialLevel: 'heldAgainstDark', // Flag for special behavior
+            shadowWaveCount: 3, // Number of darkness waves
+            shadowsPerWave: 8 // Shadows per wave
         }
     ]
 };

@@ -953,3 +953,282 @@ class BlackLight {
         ctx.restore();
     }
 }
+
+/**
+ * Second Light class (for Level 7 - Crossing Lights)
+ * AI-controlled light that mirrors player movement toward center
+ */
+class SecondLight {
+    constructor(x, y, lightColor = null) {
+        this.x = x;
+        this.y = y;
+        this.startX = x;
+        this.startY = y;
+        this.size = 30;
+        this.lightColor = lightColor || CONFIG.lightColors[2]; // Default to Sky Blue
+        
+        // Animation
+        this.time = 0;
+        
+        // Movement
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.speed = CONFIG.player.speed;
+        this.isMoving = false;
+        
+        // Target (the meeting point)
+        this.targetX = null;
+        this.targetY = null;
+        
+        // Idle animation
+        this.idleTime = Math.PI; // Offset from player for variation
+        this.idleAmplitudeX = 0.15;
+        this.idleAmplitudeY = 0.25;
+        this.idleSpeedX = 0.015;
+        this.idleSpeedY = 0.018;
+    }
+    
+    /**
+     * Set target meeting point
+     */
+    setTarget(x, y) {
+        this.targetX = x;
+        this.targetY = y;
+    }
+    
+    /**
+     * Update - mirrors player movement toward target
+     */
+    update(playerIsMoving) {
+        this.time += 0.08;
+        this.idleTime += 0.016;
+        
+        // Only move if player is moving
+        if (playerIsMoving && this.targetX !== null) {
+            // Calculate direction to target
+            const dx = this.targetX - this.x;
+            const dy = this.targetY - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 5) { // Stop when very close
+                // Move toward target
+                const dirX = dx / distance;
+                const dirY = dy / distance;
+                
+                this.velocityX = dirX * this.speed;
+                this.velocityY = dirY * this.speed;
+                
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                this.isMoving = true;
+            } else {
+                // Reached target
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.isMoving = false;
+            }
+        } else {
+            // Decelerate when not moving
+            this.velocityX *= 0.85;
+            this.velocityY *= 0.85;
+            
+            if (Math.abs(this.velocityX) < 0.01) this.velocityX = 0;
+            if (Math.abs(this.velocityY) < 0.01) this.velocityY = 0;
+            
+            this.isMoving = Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1;
+        }
+    }
+    
+    /**
+     * Get display position with idle animation
+     */
+    getDisplayPosition() {
+        if (!this.isMoving) {
+            const idleOffsetX = Math.sin(this.idleTime * this.idleSpeedX) * this.idleAmplitudeX;
+            const idleOffsetY = Math.sin(this.idleTime * this.idleSpeedY) * this.idleAmplitudeY;
+            
+            return {
+                x: this.x + idleOffsetX,
+                y: this.y + idleOffsetY
+            };
+        }
+        
+        return { x: this.x, y: this.y };
+    }
+    
+    /**
+     * Draw the second light (similar to player)
+     */
+    draw(ctx) {
+        const displayPos = this.getDisplayPosition();
+        const drawX = displayPos.x;
+        const drawY = displayPos.y;
+        
+        const pulse = 1 + Math.sin(this.time) * 0.08;
+        
+        // Draw glow layers
+        for (let i = 3; i >= 0; i--) {
+            const glowRadius = (this.size + i * 15) * pulse;
+            const alpha = (0.3 - i * 0.07) * pulse;
+            
+            const gradient = ctx.createRadialGradient(
+                drawX, drawY, 0,
+                drawX, drawY, glowRadius
+            );
+            
+            const r = parseInt(this.lightColor.color.slice(1, 3), 16);
+            const g = parseInt(this.lightColor.color.slice(3, 5), 16);
+            const b = parseInt(this.lightColor.color.slice(5, 7), 16);
+            
+            gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${alpha * 0.8})`);
+            gradient.addColorStop(0.5, this.hexToRgba(this.lightColor.glow, alpha * 0.5));
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Core light
+        ctx.fillStyle = this.lightColor.color;
+        ctx.beginPath();
+        ctx.arc(drawX, drawY, (this.size / 2) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Bright center
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.arc(drawX, drawY, (this.size / 4) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Particles
+        for (let i = 0; i < 6; i++) {
+            const angle = (this.time + i * Math.PI / 3);
+            const distance = 25 + Math.sin(this.time * 2 + i) * 8;
+            const px = drawX + Math.cos(angle) * distance;
+            const py = drawY + Math.sin(angle) * distance;
+            const particleAlpha = Math.sin(this.time * 3 + i) * 0.5 + 0.5;
+            
+            ctx.fillStyle = this.hexToRgba(this.lightColor.glow, particleAlpha * 0.6);
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    /**
+     * Convert hex to rgba
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+}
+
+/**
+ * Shadow Entity class (for Level 8 - Held Against the Dark)
+ * Dark entities that dissolve when touching the shield
+ */
+class ShadowEntity {
+    constructor(x, y, targetX, targetY) {
+        this.x = x;
+        this.y = y;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.size = 20;
+        this.speed = 1.2;
+        
+        // Visual
+        this.time = 0;
+        this.alpha = 0; // Fades in
+        this.dissolving = false;
+        this.dissolveProgress = 0;
+        
+        // Movement
+        this.velocityX = 0;
+        this.velocityY = 0;
+    }
+    
+    /**
+     * Update shadow movement
+     */
+    update() {
+        this.time += 0.08;
+        
+        // Fade in
+        if (this.alpha < 1 && !this.dissolving) {
+            this.alpha += 0.02;
+        }
+        
+        // Dissolve
+        if (this.dissolving) {
+            this.dissolveProgress += 0.05;
+            this.alpha = Math.max(0, 1 - this.dissolveProgress);
+            return this.dissolveProgress >= 1; // Return true when fully dissolved
+        }
+        
+        // Move toward target
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+            
+            this.velocityX = dirX * this.speed;
+            this.velocityY = dirY * this.speed;
+            
+            this.x += this.velocityX;
+            this.y += this.velocityY;
+        }
+        
+        return false; // Not dissolved yet
+    }
+    
+    /**
+     * Start dissolving animation
+     */
+    dissolve() {
+        this.dissolving = true;
+    }
+    
+    /**
+     * Draw shadow entity
+     */
+    draw(ctx) {
+        if (this.alpha <= 0) return;
+        
+        const pulse = 1 + Math.sin(this.time) * 0.1;
+        const size = this.dissolving ? this.size * (1 + this.dissolveProgress) : this.size;
+        
+        // Dark aura
+        for (let i = 2; i >= 0; i--) {
+            const glowRadius = (size + i * 8) * pulse;
+            const alpha = (0.3 - i * 0.08) * this.alpha;
+            
+            const gradient = ctx.createRadialGradient(
+                this.x, this.y, 0,
+                this.x, this.y, glowRadius
+            );
+            
+            gradient.addColorStop(0, `rgba(40, 20, 60, ${alpha})`);
+            gradient.addColorStop(0.6, `rgba(20, 10, 30, ${alpha * 0.5})`);
+            gradient.addColorStop(1, 'transparent');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Core
+        ctx.fillStyle = `rgba(30, 15, 45, ${this.alpha * 0.8})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, (size / 2) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
