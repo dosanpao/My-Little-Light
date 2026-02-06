@@ -505,6 +505,9 @@ class LevelScreen {
         // Draw particles/ambiance
         this.drawAmbiance(ctx);
         
+        // NEW: Draw proximity vignette (darkens screen as black light approaches)
+        this.drawProximityVignette(ctx);
+        
         // NEW: Draw death overlay (black fade)
         if (this.isDying && this.deathFadeProgress > 0) {
             ctx.fillStyle = `rgba(0, 0, 0, ${this.deathFadeProgress})`;
@@ -882,6 +885,78 @@ class LevelScreen {
             ctx.beginPath();
             ctx.arc(x, y, 2, 0, Math.PI * 2);
             ctx.fill();
+        }
+    }
+
+    /**
+     * Draw proximity vignette effect based on black light distance
+     * Creates a cozy, atmospheric darkening as danger approaches
+     */
+    drawProximityVignette(ctx) {
+        if (!this.blackLight || !this.player || this.isDying) return;
+        
+        // Calculate distance between player and black light
+        const dx = this.blackLight.x - this.player.x;
+        const dy = this.blackLight.y - this.player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Define distance thresholds for vignette effect
+        const maxDistance = 400; // No vignette beyond this
+        const minDistance = 80;  // Maximum vignette at this distance
+        
+        // Calculate vignette intensity (0 = none, 1 = maximum)
+        let intensity = 0;
+        if (distance < maxDistance) {
+            // Smooth interpolation between min and max
+            intensity = 1 - Utils.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1);
+            // Apply easing for more dramatic effect as it gets closer
+            intensity = Math.pow(intensity, 1.5);
+        }
+        
+        if (intensity > 0) {
+            // Create radial gradient vignette centered on player
+            const centerX = this.player.x;
+            const centerY = this.player.y;
+            
+            // Inner radius - area that stays relatively bright
+            const innerRadius = 120 - (intensity * 50); // Shrinks as danger approaches
+            
+            // Outer radius - edge of the vignette
+            const outerRadius = Math.max(
+                CONFIG.canvas.width,
+                CONFIG.canvas.height
+            ) * 0.8;
+            
+            const gradient = ctx.createRadialGradient(
+                centerX, centerY, innerRadius,
+                centerX, centerY, outerRadius
+            );
+            
+            // Cozy dark purple/blue vignette colors
+            gradient.addColorStop(0, `rgba(15, 10, 25, 0)`); // Transparent center
+            gradient.addColorStop(0.4, `rgba(15, 10, 25, ${intensity * 0.2})`);
+            gradient.addColorStop(0.7, `rgba(20, 15, 35, ${intensity * 0.5})`);
+            gradient.addColorStop(1, `rgba(10, 5, 20, ${intensity * 0.7})`);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+            
+            // Add subtle pulsing effect when very close
+            if (intensity > 0.6) {
+                const pulseIntensity = (intensity - 0.6) * 2.5; // 0 to 1 in the danger zone
+                const pulse = Math.sin(Date.now() / 300) * 0.5 + 0.5;
+                
+                const pulseGradient = ctx.createRadialGradient(
+                    centerX, centerY, innerRadius * 0.5,
+                    centerX, centerY, innerRadius * 1.5
+                );
+                
+                pulseGradient.addColorStop(0, `rgba(40, 20, 60, 0)`);
+                pulseGradient.addColorStop(1, `rgba(40, 20, 60, ${pulseIntensity * pulse * 0.15})`);
+                
+                ctx.fillStyle = pulseGradient;
+                ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+            }
         }
     }
 
